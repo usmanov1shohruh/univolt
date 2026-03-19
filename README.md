@@ -64,6 +64,44 @@ This project is built with:
 
 Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
 
+## Telegram Mini App
+
+This app integrates with [Telegram Web Apps](https://core.telegram.org/bots/webapps) via [`@twa-dev/sdk`](https://github.com/twa-dev/sdk). Initialization lives in [`src/telegram/webApp.ts`](src/telegram/webApp.ts) and runs from [`src/main.tsx`](src/main.tsx).
+
+### Requirements
+
+- **HTTPS** — Telegram only loads Mini Apps over `https://` (except some local tooling).
+- **SPA fallback** — the host must serve `index.html` for client routes (same as any Vite/React Router deploy).
+
+### Build and base path
+
+```sh
+npm run build
+npm run preview   # optional local check of production build
+```
+
+If the site is not at the domain root, set the base path when building (see [`vite.config.ts`](vite.config.ts)):
+
+```sh
+BASE_PATH=/your-subpath/ npm run build
+```
+
+Vite exposes this as `import.meta.env.BASE_URL` for the router `basename`.
+
+### BotFather
+
+1. Create a bot with [@BotFather](https://t.me/BotFather).
+2. Set a **Menu Button** or **Web App** URL to your deployed HTTPS URL (must match the path you used for `BASE_PATH`, if any).
+3. Open the bot in Telegram and launch the Mini App from the menu.
+
+### Local testing with Telegram
+
+Telegram needs a **public HTTPS** URL. Use a tunnel (e.g. [ngrok](https://ngrok.com/) or [Cloudflare Tunnel](https://developers.cloudflare.com/cloudflare-one/connections/connect-apps/)) pointing at `npm run dev` (or `preview`), then temporarily set that URL in BotFather.
+
+### Security note
+
+`initData` is not validated on a server in this project (data is mostly static). If you add authenticated APIs later, verify `initData` with your bot token on the backend; do not trust `initDataUnsafe` alone for sensitive actions.
+
 ## Can I connect a custom domain to my Lovable project?
 
 Yes, you can!

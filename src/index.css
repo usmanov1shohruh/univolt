@@ -75,6 +75,12 @@
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
   }
+
+  /* Telegram Mini App: match Telegram chrome + theme (see src/telegram/webApp.ts) */
+  html.telegram-mini-app body {
+    background-color: var(--tg-theme-bg-color, hsl(var(--background)));
+    color: var(--tg-theme-text-color, hsl(var(--foreground)));
+  }
 }
 
 @layer utilities {

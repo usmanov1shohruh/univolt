@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
 import { Station, Filters, defaultFilters } from '@/types/station';
-import { stations as allStations } from '@/data/stations';
 import { filterStations, countActiveFilters } from "@/domain/stations/filtering";
 import { loadFavorites, saveFavorites } from "@/infra/storage/favoritesStorage";
 import { loadOnboardingSeen, saveOnboardingSeen } from "@/infra/storage/onboardingStorage";
 import { loadHasSelectedLanguage, saveLanguageSelected } from "@/infra/storage/languageFlagsStorage";
+import { useQuery } from '@tanstack/react-query';
+import { buildStationsQueryParams, fetchStationsFromApi } from '@/infra/api/stationsApi';
 
 interface AppState {
   stations: Station[];
@@ -41,8 +42,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(() => loadOnboardingSeen());
   const [hasSelectedLanguage, setHasSelectedLanguage] = useState(() => loadHasSelectedLanguage());
   const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => { const t = setTimeout(() => setIsLoading(false), 1200); return () => clearTimeout(t); }, []);
   useEffect(() => { saveFavorites(favorites); }, [favorites]);
 
   const toggleFavorite = useCallback((id: string) => {
@@ -59,11 +58,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setHasSelectedLanguage(true);
   }, []);
 
-  const filteredStations = filterStations(allStations, filters, searchQuery);
+  const { data: apiStations = [], isLoading: isStationsLoading } = useQuery({
+    queryKey: ['stations', filters, searchQuery],
+    queryFn: () => fetchStationsFromApi(buildStationsQueryParams(filters, searchQuery)),
+  });
+
+  useEffect(() => {
+    setIsLoading(isStationsLoading);
+  }, [isStationsLoading]);
+
+  const filteredStations = filterStations(apiStations, filters, searchQuery);
 
   return (
     <AppContext.Provider value={{
-      stations: allStations,
+      stations: apiStations,
       filteredStations,
       selectedStation,
       favorites,
