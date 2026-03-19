@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>UniVolt</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+  </head>
+  <body>
+    <script type="text/javascript">
+      // SPA redirect for GitHub Pages (BrowserRouter-friendly)
+      // Source pattern: https://github.com/rafgraph/spa-github-pages
+      (function (l) {
+        var segmentCount = 1;
+        var repoBase = l.pathname.split("/").slice(0, 1 + segmentCount).join("/") + "/";
+        l.replace(
+          l.protocol +
+            "//" +
+            l.hostname +
+            (l.port ? ":" + l.port : "") +
+            repoBase +
+            "?/" +
+            l.pathname
+              .slice(repoBase.length)
+              .split("/")
+              .join("/") +
+            (l.search ? "&" + l.search.slice(1).replace(/&/g, "~and~") : "") +
+            l.hash
+        );
+      })(window.location);
+    </script>
+  </body>
+</html>
