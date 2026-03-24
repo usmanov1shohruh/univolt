@@ -14,6 +14,10 @@ function applyThemeParamsToDocument(): void {
 
 function applyViewportVars(): void {
   const root = document.documentElement;
+  const appInsets = WebApp as unknown as {
+    safeAreaInset?: { top?: number; bottom?: number };
+    contentSafeAreaInset?: { top?: number; bottom?: number };
+  };
   const fallback = `${window.innerHeight}px`;
   const viewportHeight =
     typeof WebApp.viewportHeight === "number" && WebApp.viewportHeight > 0
@@ -24,10 +28,20 @@ function applyViewportVars(): void {
     WebApp.viewportStableHeight > 0
       ? `${WebApp.viewportStableHeight}px`
       : viewportHeight;
+  const topInset =
+    appInsets.contentSafeAreaInset?.top ??
+    appInsets.safeAreaInset?.top ??
+    0;
+  const bottomInset =
+    appInsets.contentSafeAreaInset?.bottom ??
+    appInsets.safeAreaInset?.bottom ??
+    0;
 
   root.style.setProperty("--tg-viewport-height", viewportHeight);
   root.style.setProperty("--tg-stable-viewport-height", stableViewportHeight);
   root.style.setProperty("--app-height", stableViewportHeight);
+  root.style.setProperty("--app-safe-top", `${topInset}px`);
+  root.style.setProperty("--app-safe-bottom", `${bottomInset}px`);
 }
 
 /**

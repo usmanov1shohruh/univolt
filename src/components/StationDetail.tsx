@@ -60,7 +60,7 @@ export default function StationDetail({ station, onBack }: Props) {
       className="fixed inset-0 bg-background z-[980] overflow-y-auto lg:relative lg:inset-auto"
     >
       {/* Sticky header */}
-      <div className="sticky top-0 z-[981] surface-glass border-b border-border/50 px-4 py-3 flex items-center gap-3">
+      <div className="sticky top-0 z-[981] surface-glass border-b border-border/50 px-4 py-3 safe-top flex items-center gap-3">
         <button onClick={onBack} className="p-2 -ml-2 rounded-lg hover:bg-muted transition-colors">
           <ArrowLeft className="w-4 h-4" />
         </button>

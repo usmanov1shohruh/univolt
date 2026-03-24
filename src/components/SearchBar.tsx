@@ -13,7 +13,7 @@ export default function SearchBar({ onOpenFilters }: Props) {
   const [isFocused, setIsFocused] = useState(false);
 
   return (
-    <div className="absolute top-4 left-4 right-4 z-[900] flex gap-2 pointer-events-none">
+    <div className="absolute left-4 right-4 z-[900] flex gap-2 pointer-events-none safe-top" style={{ top: 8 }}>
       <div className={`flex-1 flex items-center surface-glass rounded-xl border transition-all duration-200 px-3.5 shadow-elevated pointer-events-auto ${
         isFocused ? 'border-primary/40' : 'border-border/40'
       }`}>
