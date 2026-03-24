@@ -29,6 +29,8 @@ const MapTabContent = ({
   onStationSelect,
   onCloseDetail,
 }: MapTabContentProps) => {
+  const mapResizeSignal = `${showFilters}-${detailStation?.id ?? "none"}`;
+
   return (
     <>
       {/* Mobile search */}
@@ -37,7 +39,11 @@ const MapTabContent = ({
       </div>
 
       {/* Map */}
-      <StationMap stations={stations} onStationSelect={onStationSelect} />
+      <StationMap
+        stations={stations}
+        onStationSelect={onStationSelect}
+        resizeSignal={mapResizeSignal}
+      />
 
       {/* Mobile bottom sheet */}
       <BottomSheet

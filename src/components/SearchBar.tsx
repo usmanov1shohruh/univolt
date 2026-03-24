@@ -13,8 +13,8 @@ export default function SearchBar({ onOpenFilters }: Props) {
   const [isFocused, setIsFocused] = useState(false);
 
   return (
-    <div className="absolute top-4 left-4 right-4 z-20 flex gap-2">
-      <div className={`flex-1 flex items-center surface-glass rounded-xl border transition-all duration-200 px-3.5 shadow-elevated ${
+    <div className="absolute top-4 left-4 right-4 z-[900] flex gap-2 pointer-events-none">
+      <div className={`flex-1 flex items-center surface-glass rounded-xl border transition-all duration-200 px-3.5 shadow-elevated pointer-events-auto ${
         isFocused ? 'border-primary/40' : 'border-border/40'
       }`}>
         <Search className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
@@ -35,7 +35,7 @@ export default function SearchBar({ onOpenFilters }: Props) {
       </div>
       <button
         onClick={onOpenFilters}
-        className="w-[46px] h-[46px] surface-glass rounded-xl border border-border/40 flex items-center justify-center relative shadow-elevated transition-colors hover:bg-card-elevated"
+        className="w-[46px] h-[46px] surface-glass rounded-xl border border-border/40 flex items-center justify-center relative shadow-elevated transition-colors hover:bg-card-elevated pointer-events-auto"
       >
         <SlidersHorizontal className="w-3.5 h-3.5 text-foreground" />
         {activeFiltersCount > 0 && (

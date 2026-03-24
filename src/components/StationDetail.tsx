@@ -57,10 +57,10 @@ export default function StationDetail({ station, onBack }: Props) {
       animate={{ x: 0 }}
       exit={{ x: '100%' }}
       transition={{ type: 'spring', damping: 32, stiffness: 300 }}
-      className="fixed inset-0 bg-background z-40 overflow-y-auto lg:relative lg:inset-auto"
+      className="fixed inset-0 bg-background z-[980] overflow-y-auto lg:relative lg:inset-auto"
     >
       {/* Sticky header */}
-      <div className="sticky top-0 z-10 surface-glass border-b border-border/50 px-4 py-3 flex items-center gap-3">
+      <div className="sticky top-0 z-[981] surface-glass border-b border-border/50 px-4 py-3 flex items-center gap-3">
         <button onClick={onBack} className="p-2 -ml-2 rounded-lg hover:bg-muted transition-colors">
           <ArrowLeft className="w-4 h-4" />
         </button>
@@ -174,7 +174,7 @@ export default function StationDetail({ station, onBack }: Props) {
       </div>
 
       {/* Sticky CTAs */}
-      <div className="fixed bottom-0 left-0 right-0 surface-glass border-t border-border/50 px-5 py-4 flex gap-2.5 safe-bottom z-10 lg:relative lg:border-0">
+      <div className="fixed bottom-0 left-0 right-0 surface-glass border-t border-border/50 px-5 py-4 flex gap-2.5 safe-bottom z-[981] lg:relative lg:border-0">
         <button
           onClick={() => window.open(station.route_url, '_blank')}
           className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground font-display font-semibold text-[14px] flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-[0.98]"

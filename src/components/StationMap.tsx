@@ -48,9 +48,56 @@ function MapUpdater({ selectedStation }: { selectedStation: Station | null }) {
 interface Props {
   stations: Station[];
   onStationSelect: (s: Station) => void;
+  resizeSignal?: string;
 }
 
-export default function StationMap({ stations, onStationSelect }: Props) {
+function MapSizeController({ resizeSignal }: { resizeSignal?: string }) {
+  const map = useMap();
+
+  useEffect(() => {
+    let raf1 = 0;
+    let raf2 = 0;
+    let timeoutId = 0;
+
+    const invalidate = () => {
+      map.invalidateSize({ pan: false, debounceMoveend: true });
+    };
+
+    const scheduleInvalidate = () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      clearTimeout(timeoutId);
+
+      raf1 = requestAnimationFrame(() => {
+        raf2 = requestAnimationFrame(() => {
+          invalidate();
+        });
+      });
+
+      // Fallback for slower WebView animation/layout updates.
+      timeoutId = window.setTimeout(invalidate, 220);
+    };
+
+    const handleResize = () => scheduleInvalidate();
+    const visualViewport = window.visualViewport;
+
+    scheduleInvalidate();
+    window.addEventListener("resize", handleResize, { passive: true });
+    visualViewport?.addEventListener("resize", handleResize);
+
+    return () => {
+      cancelAnimationFrame(raf1);
+      cancelAnimationFrame(raf2);
+      clearTimeout(timeoutId);
+      window.removeEventListener("resize", handleResize);
+      visualViewport?.removeEventListener("resize", handleResize);
+    };
+  }, [map, resizeSignal]);
+
+  return null;
+}
+
+export default function StationMap({ stations, onStationSelect, resizeSignal }: Props) {
   const { selectedStation } = useApp();
   const { t } = useI18n();
 
@@ -64,6 +111,7 @@ export default function StationMap({ stations, onStationSelect }: Props) {
     >
       <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
       <MapUpdater selectedStation={selectedStation} />
+      <MapSizeController resizeSignal={resizeSignal} />
       {stations.map(station => (
         <Marker
           key={station.id}

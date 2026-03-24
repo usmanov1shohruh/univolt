@@ -6,6 +6,7 @@
 
 @layer base {
   :root {
+    --app-height: 100dvh;
     --background: 222 25% 4%;
     --foreground: 0 0% 96%;
 

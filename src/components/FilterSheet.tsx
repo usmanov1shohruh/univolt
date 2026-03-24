@@ -57,11 +57,11 @@ export default function FilterSheet({ isOpen, onClose }: Props) {
       {isOpen && (
         <>
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-background/70 backdrop-blur-sm z-40" onClick={onClose} />
+            className="fixed inset-0 bg-background/70 backdrop-blur-sm z-[960]" onClick={onClose} />
           <motion.div
             initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
             transition={{ type: 'spring', damping: 32, stiffness: 300 }}
-            className="fixed left-0 right-0 bottom-0 bg-background rounded-t-2xl border-t border-border/50 z-50 max-h-[82vh] flex flex-col"
+            className="fixed left-0 right-0 bottom-0 bg-background rounded-t-2xl border-t border-border/50 z-[970] max-h-[82vh] flex flex-col"
           >
             <div className="flex items-center justify-between px-5 py-4">
               <h2 className="font-display font-semibold text-base">{t('filter.title')}</h2>

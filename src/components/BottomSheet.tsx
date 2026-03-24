@@ -36,7 +36,7 @@ export default function BottomSheet({ stations, onStationSelect, isLoading }: Pr
 
   return (
     <motion.div
-      className="fixed left-0 right-0 bottom-0 bg-background rounded-t-2xl border-t border-border/50 z-30 flex flex-col lg:hidden shadow-elevated"
+      className="fixed left-0 right-0 bottom-0 bg-background rounded-t-2xl border-t border-border/50 z-[930] flex flex-col lg:hidden shadow-elevated"
       style={{ maxHeight: 'calc(100vh - 56px)' }}
       animate={{ top: snapPoints[sheetState] }}
       transition={{ type: 'spring', damping: 32, stiffness: 300 }}

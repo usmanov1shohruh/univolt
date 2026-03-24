@@ -12,6 +12,24 @@ function applyThemeParamsToDocument(): void {
   }
 }
 
+function applyViewportVars(): void {
+  const root = document.documentElement;
+  const fallback = `${window.innerHeight}px`;
+  const viewportHeight =
+    typeof WebApp.viewportHeight === "number" && WebApp.viewportHeight > 0
+      ? `${WebApp.viewportHeight}px`
+      : fallback;
+  const stableViewportHeight =
+    typeof WebApp.viewportStableHeight === "number" &&
+    WebApp.viewportStableHeight > 0
+      ? `${WebApp.viewportStableHeight}px`
+      : viewportHeight;
+
+  root.style.setProperty("--tg-viewport-height", viewportHeight);
+  root.style.setProperty("--tg-stable-viewport-height", stableViewportHeight);
+  root.style.setProperty("--app-height", stableViewportHeight);
+}
+
 /**
  * True when the app runs inside Telegram (Mini App / Web App).
  * Outside Telegram the stub uses platform "unknown" and empty initData.
@@ -44,6 +62,7 @@ export function initTelegramWebApp(): void {
 
     document.documentElement.classList.add("telegram-mini-app");
     applyThemeParamsToDocument();
+    applyViewportVars();
 
     try {
       WebApp.setHeaderColor("bg_color");
@@ -61,7 +80,11 @@ export function initTelegramWebApp(): void {
         /* ignore */
       }
     };
+    const onViewportChanged = (): void => {
+      applyViewportVars();
+    };
     WebApp.onEvent("themeChanged", onThemeChanged);
+    WebApp.onEvent("viewportChanged", onViewportChanged);
   } catch (e) {
     console.warn("[Telegram WebApp] init failed", e);
   }

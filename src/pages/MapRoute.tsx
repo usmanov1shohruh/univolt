@@ -56,7 +56,10 @@ export default function MapRoute() {
   };
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-background flex">
+    <div
+      className="min-h-screen w-full overflow-hidden bg-background flex min-h-0"
+      style={{ height: "var(--app-height, 100dvh)" }}
+    >
       <DesktopSidebar
         stations={filteredStations}
         onStationSelect={handleStationSelect}
@@ -64,7 +67,7 @@ export default function MapRoute() {
         isLoading={isLoading}
       />
 
-      <div className="flex-1 relative">
+      <div className="flex-1 relative min-h-0">
         <MapTabContent
           stations={filteredStations}
           isLoading={isLoading}
