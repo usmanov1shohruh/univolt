@@ -150,20 +150,28 @@ export default function StationDetail({ station, onBack }: Props) {
           <div className="flex-1 bg-card rounded-lg p-3 border border-border/50">
             <div className="flex items-center gap-1.5 text-primary mb-1">
               <Zap className="w-3.5 h-3.5" />
-              <span className="font-display font-semibold text-sm">{station.max_power_kw}</span>
-              <span className="text-[11px] text-foreground/70">{t('station.kw')}</span>
+              <span className="font-display font-semibold text-sm">
+                {station.max_power_kw == null ? t('station.power_unknown') : station.max_power_kw}
+              </span>
+              {station.max_power_kw != null && (
+                <span className="text-[11px] text-foreground/70">{t('station.kw')}</span>
+              )}
             </div>
             <p className="text-[10px] text-foreground/70">{t(`speed.${station.charging_speed_category}`)}</p>
           </div>
           <div className="flex-1 bg-card rounded-lg p-3 border border-border/50">
             <div className="flex items-center gap-1.5 text-foreground mb-1">
               <Clock className="w-3.5 h-3.5 text-foreground/65" />
-              <span className="font-display font-semibold text-sm">{station.is_24_7 ? '24/7' : station.hours}</span>
+              <span className="font-display font-semibold text-sm">
+                {station.is_24_7 ? '24/7' : station.hours || t('station.check_on_site')}
+              </span>
             </div>
             <p className="text-[10px] text-foreground/70">{t('station.hours')}</p>
           </div>
           <div className="flex-1 bg-card rounded-lg p-3 border border-border/50">
-            <div className="font-display font-semibold text-sm text-foreground mb-1">{station.ports_count}</div>
+            <div className="font-display font-semibold text-sm text-foreground mb-1">
+              {station.ports_count == null ? t('station.ports_unknown') : station.ports_count}
+            </div>
             <p className="text-[10px] text-foreground/70">{t('station.ports')}</p>
           </div>
         </div>

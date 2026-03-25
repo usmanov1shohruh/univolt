@@ -1,5 +1,5 @@
 export type ConnectorType = 'CCS2' | 'GB/T' | 'Type2' | 'CHAdeMO' | 'J1772';
-export type ChargingSpeed = 'slow_ac' | 'medium' | 'fast_dc' | 'ultra_fast';
+export type ChargingSpeed = 'slow_ac' | 'medium' | 'fast_dc' | 'ultra_fast' | 'unknown';
 export type AvailabilityStatus = 'available' | 'busy' | 'unknown' | 'limited';
 export type ParkingType = 'mall' | 'hotel' | 'business_center' | 'residential' | 'standalone' | 'gas_station';
 export type Amenity = 'cafe' | 'parking' | 'restroom' | 'security' | 'shopping' | 'hotel' | 'wifi' | 'waiting_area';
@@ -14,12 +14,12 @@ export interface Station {
   latitude: number;
   longitude: number;
   connector_types: ConnectorType[];
-  max_power_kw: number;
+  max_power_kw: number | null;
   charging_speed_category: ChargingSpeed;
   hours: string;
   is_24_7: boolean;
   availability_status: AvailabilityStatus;
-  ports_count: number;
+  ports_count: number | null;
   parking_type: ParkingType;
   payment_info_text: string;
   access_notes: string;

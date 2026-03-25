@@ -1,4 +1,10 @@
-import type { Station, Filters, AvailabilityStatus, ConnectorType } from '@/types/station';
+import type {
+  Station,
+  Filters,
+  AvailabilityStatus,
+  ConnectorType,
+  ChargingSpeed,
+} from '@/types/station';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/_/backend';
 
@@ -40,31 +46,42 @@ function mapBackendStatusToAvailability(status: BackendStationStatus): Availabil
   }
 }
 
+/** District label from catalog address, e.g. "Toshkent, Yunusobod tumani, ..." */
+export function parseDistrictFromAddress(address: string): string {
+  if (!address?.trim()) return '';
+  const m = address.match(/,\s*([^,]+?)\s+tumani\b/i);
+  if (m) return m[1].trim();
+  const m2 = address.match(/\b([^,]+)\s+tumani\b/i);
+  return m2 ? m2[1].trim() : '';
+}
+
+function chargingSpeedFromKw(kw: number | null): ChargingSpeed {
+  if (kw == null) return 'unknown';
+  if (kw >= 120) return 'ultra_fast';
+  if (kw >= 60) return 'fast_dc';
+  if (kw >= 11) return 'medium';
+  return 'slow_ac';
+}
+
 function mapBackendToFront(station: BackendStation): Station {
   const availability_status = mapBackendStatusToAvailability(station.status);
+  const maxKw = station.maxPowerKw ?? null;
 
   return {
     id: station.id,
     name: station.name,
     operator: station.network || 'Unknown operator',
     address: station.address,
-    district: '',
+    district: parseDistrictFromAddress(station.address),
     latitude: station.latitude,
     longitude: station.longitude,
     connector_types: station.connectorTypes as ConnectorType[],
-    max_power_kw: station.maxPowerKw ?? 0,
-    charging_speed_category:
-      (station.maxPowerKw ?? 0) >= 120
-        ? 'ultra_fast'
-        : (station.maxPowerKw ?? 0) >= 60
-          ? 'fast_dc'
-          : (station.maxPowerKw ?? 0) >= 11
-            ? 'medium'
-            : 'slow_ac',
+    max_power_kw: maxKw,
+    charging_speed_category: chargingSpeedFromKw(maxKw),
     hours: station.openingHours ?? '',
     is_24_7: station.openingHours === '24/7',
     availability_status,
-    ports_count: station.portsCount ?? 0,
+    ports_count: station.portsCount ?? null,
     parking_type: 'standalone',
     payment_info_text: '',
     access_notes: '',
@@ -74,7 +91,7 @@ function mapBackendToFront(station: BackendStation): Station {
     last_updated_text: '',
     short_description: '',
     route_url: '',
-    source_type: 'mock',
+    source_type: 'parsed',
     confidence_level: 0.5,
   };
 }

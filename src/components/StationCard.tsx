@@ -37,8 +37,16 @@ export function ConnectorBadge({ type }: { type: ConnectorType }) {
   );
 }
 
-export function PowerBadge({ kw }: { kw: number }) {
+export function PowerBadge({ kw }: { kw: number | null }) {
   const { t } = useI18n();
+  if (kw == null) {
+    return (
+      <span className="px-2 py-0.5 rounded-md bg-muted text-[11px] font-medium text-muted-foreground flex items-center gap-1">
+        <Zap className="w-2.5 h-2.5 opacity-60" />
+        {t('station.power_unknown')}
+      </span>
+    );
+  }
   return (
     <span className="px-2 py-0.5 rounded-md bg-primary/8 text-[11px] font-medium text-primary flex items-center gap-1">
       <Zap className="w-2.5 h-2.5" />
@@ -98,9 +106,11 @@ export default function StationCard({ station, onSelect, compact }: StationCardP
             <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Clock className="w-3 h-3" />
-                {station.is_24_7 ? '24/7' : station.hours}
+                {station.is_24_7 ? '24/7' : station.hours || t('station.check_on_site')}
               </span>
-              <span>{station.ports_count} {t('station.ports')}</span>
+              <span>
+                {station.ports_count == null ? t('station.ports_unknown') : `${station.ports_count} ${t('station.ports')}`}
+              </span>
             </div>
             <div className="flex items-center gap-1">
               <button

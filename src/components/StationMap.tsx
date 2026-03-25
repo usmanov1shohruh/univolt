@@ -154,9 +154,17 @@ export default function StationMap({ stations, onStationSelect, resizeSignal }: 
               <p className="font-display font-semibold text-[13px] text-foreground leading-tight">{station.name}</p>
               <p className="text-[11px] text-muted-foreground mt-1">{station.operator}</p>
               <div className="flex items-center gap-2 mt-1.5 text-[11px] text-muted-foreground">
-                <span>{station.max_power_kw} {t('station.kw')}</span>
+                <span>
+                  {station.max_power_kw == null
+                    ? t('station.power_unknown')
+                    : `${station.max_power_kw} ${t('station.kw')}`}
+                </span>
                 <span className="text-border">·</span>
-                <span>{station.ports_count} {t('station.ports')}</span>
+                <span>
+                  {station.ports_count == null
+                    ? t('station.ports_unknown')
+                    : `${station.ports_count} ${t('station.ports')}`}
+                </span>
               </div>
             </div>
           </Popup>

@@ -49,8 +49,8 @@ export default function FilterSheet({ isOpen, onClose }: Props) {
   const apply = () => { setFilters(local); onClose(); };
   const reset = () => { setLocal(defaultFilters); setFilters(defaultFilters); };
 
-  const operators = [...new Set(stations.map(s => s.operator))];
-  const districts = [...new Set(stations.map(s => s.district))];
+  const operators = [...new Set(stations.map(s => s.operator))].sort((a, b) => a.localeCompare(b));
+  const districts = [...new Set(stations.map(s => s.district).filter(Boolean))].sort((a, b) => a.localeCompare(b));
 
   return (
     <AnimatePresence>
