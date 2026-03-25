@@ -2,6 +2,7 @@ import { Station, AvailabilityStatus, ConnectorType } from '@/types/station';
 import { useI18n } from '@/lib/i18n';
 import { Zap, Clock, MapPin, Heart, ChevronRight } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
+import { getOperatorLogoLetter, getOperatorLogoUrl } from '@/lib/operatorLogos';
 
 function StatusDot({ status }: { status: AvailabilityStatus }) {
   const colors: Record<AvailabilityStatus, string> = {
@@ -65,6 +66,8 @@ export default function StationCard({ station, onSelect, compact }: StationCardP
   const { favorites, toggleFavorite } = useApp();
   const { t } = useI18n();
   const isFav = favorites.includes(station.id);
+  const logoUrl = getOperatorLogoUrl(station.operator);
+  const logoLetter = getOperatorLogoLetter(station.operator);
 
   return (
     <div
@@ -83,7 +86,23 @@ export default function StationCard({ station, onSelect, compact }: StationCardP
 
       {/* Row 2: operator + address */}
       <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mb-3">
-        <span className="shrink-0">{station.operator}</span>
+        <span className="inline-flex items-center gap-2 shrink-0 min-w-0">
+          {logoUrl ? (
+            <img
+              src={logoUrl}
+              alt=""
+              width={14}
+              height={14}
+              className="w-[14px] h-[14px] object-contain block"
+              loading="eager"
+            />
+          ) : (
+            <span className="w-[14px] h-[14px] rounded-[6px] bg-muted/60 inline-flex items-center justify-center text-[10px] font-bold text-muted-foreground shrink-0">
+              {logoLetter}
+            </span>
+          )}
+          <span className="truncate">{station.operator}</span>
+        </span>
         <span className="text-border">·</span>
         <span className="truncate">{station.address}</span>
       </div>

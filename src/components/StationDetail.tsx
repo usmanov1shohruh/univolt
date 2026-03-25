@@ -4,6 +4,8 @@ import { Station, Amenity } from '@/types/station';
 import { ConnectorBadge, PowerBadge } from './StationCard';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/lib/i18n';
+import { getNetworkAppUrl } from '@/lib/networkAppLinks';
+import { getOperatorLogoLetter, getOperatorLogoUrl } from '@/lib/operatorLogos';
 import { toast } from 'sonner';
 import { useState } from 'react';
 import WebApp from '@twa-dev/sdk';
@@ -76,7 +78,10 @@ export default function StationDetail({ station, onBack }: Props) {
   const { favorites, toggleFavorite } = useApp();
   const { t } = useI18n();
   const isFav = favorites.includes(station.id);
+  const logoUrl = getOperatorLogoUrl(station.operator);
+  const logoLetter = getOperatorLogoLetter(station.operator);
   const [isRoutePickerOpen, setIsRoutePickerOpen] = useState(false);
+  const networkAppUrl = getNetworkAppUrl(station.operator, WebApp.platform);
 
   const handleSave = () => {
     toggleFavorite(station.id);
@@ -94,6 +99,14 @@ export default function StationDetail({ station, onBack }: Props) {
   const handleRouteSelect = (provider: MapProvider) => {
     setIsRoutePickerOpen(false);
     openExternalLink(buildRouteUrl(provider, station));
+  };
+
+  const handleOpenNetworkApp = () => {
+    if (!networkAppUrl) {
+      toast(t('station.network_app_unavailable'), { duration: 2000 });
+      return;
+    }
+    openExternalLink(networkAppUrl);
   };
 
   const statusColors: Record<string, string> = {
@@ -140,7 +153,23 @@ export default function StationDetail({ station, onBack }: Props) {
               {t(`status.${station.availability_status}`)}
             </span>
             <span className="text-border text-[11px]">·</span>
-            <span className="text-[11px] text-foreground/70">{station.operator}</span>
+            <span className="inline-flex items-center gap-2 min-w-0">
+              {logoUrl ? (
+                <img
+                  src={logoUrl}
+                  alt=""
+                  width={18}
+                  height={18}
+                  className="w-[18px] h-[18px] object-contain block shrink-0"
+                  loading="eager"
+                />
+              ) : (
+                <span className="w-5 h-5 rounded-[6px] bg-muted/60 inline-flex items-center justify-center text-[10px] font-bold text-muted-foreground shrink-0">
+                  {logoLetter}
+                </span>
+              )}
+              <span className="text-[11px] text-foreground/70 truncate">{station.operator}</span>
+            </span>
           </div>
           <p className="text-[13px] text-foreground/80 leading-relaxed">{station.address}</p>
         </div>
@@ -250,6 +279,17 @@ export default function StationDetail({ station, onBack }: Props) {
           <Navigation className="w-4 h-4" />
           {t('station.route')}
         </button>
+        {networkAppUrl && (
+          <button
+            type="button"
+            onClick={handleOpenNetworkApp}
+            className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center transition-colors hover:bg-surface-elevated"
+            aria-label={t('station.open_network_app')}
+            title={t('station.open_network_app')}
+          >
+            <ExternalLink className="w-4 h-4 text-foreground/55" />
+          </button>
+        )}
         <button type="button" onClick={handleShare} className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center transition-colors hover:bg-surface-elevated">
           <Share2 className="w-4 h-4 text-foreground/55" />
         </button>
