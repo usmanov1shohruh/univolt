@@ -1,5 +1,5 @@
 /**
- * ETL: backend/data/parsed-stations.tsv → backend/src/stations/stations.seed.json
+ * ETL: backend/data/parsed-stations.tsv → backend/src/stations/stations.seed.json + public/stations.json
  * Dedupe by rounded lat/lon; normalize operator (network); map hours column → openingHours;
  * API availability status is always unknown (source data column is operational hours, not occupancy).
  */
@@ -10,6 +10,7 @@ const crypto = require('crypto');
 const ROOT = path.join(__dirname, '..');
 const INPUT = path.join(ROOT, 'data', 'parsed-stations.tsv');
 const OUTPUT = path.join(ROOT, 'src', 'stations', 'stations.seed.json');
+const OUTPUT_PUBLIC = path.join(ROOT, '..', 'public', 'stations.json');
 
 function stableId(lat, lon, network) {
   const h = crypto
@@ -135,8 +136,14 @@ function main() {
 
   out.sort((a, b) => a.network.localeCompare(b.network) || a.name.localeCompare(b.name));
 
-  fs.writeFileSync(OUTPUT, JSON.stringify(out, null, 2) + '\n', 'utf8');
-  console.error(`Wrote ${out.length} stations to ${path.relative(ROOT, OUTPUT)} (from ${parsed.length} parsed rows)`);
+  const pretty = JSON.stringify(out, null, 2) + '\n';
+  const compact = JSON.stringify(out) + '\n';
+  fs.writeFileSync(OUTPUT, pretty, 'utf8');
+  fs.mkdirSync(path.dirname(OUTPUT_PUBLIC), { recursive: true });
+  fs.writeFileSync(OUTPUT_PUBLIC, compact, 'utf8');
+  console.error(
+    `Wrote ${out.length} stations to ${path.relative(ROOT, OUTPUT)} + ${path.relative(ROOT, OUTPUT_PUBLIC)} (from ${parsed.length} parsed rows)`,
+  );
 }
 
 main();

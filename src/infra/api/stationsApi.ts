@@ -18,6 +18,20 @@ function resolveApiBaseUrl(): string {
 
 const API_BASE_URL = resolveApiBaseUrl();
 
+/** Same JSON shape as GET /stations; deployed as a static file when serverless API path fails (e.g. Telegram mini app). */
+function staticStationsSnapshotUrl(): string {
+  const base = import.meta.env.BASE_URL || '/';
+  return new URL('stations.json', new URL(base, window.location.origin).href).href;
+}
+
+async function fetchBackendStationsJson(url: string): Promise<BackendStation[]> {
+  const res = await fetch(url);
+  if (!res.ok) {
+    throw new Error(`Failed to fetch stations: ${res.status}`);
+  }
+  return (await res.json()) as BackendStation[];
+}
+
 type BackendStationStatus = 'available' | 'busy' | 'offline' | 'unknown';
 
 interface BackendStation {
@@ -142,11 +156,19 @@ export async function fetchStationsFromApi(params: StationsQueryParams): Promise
   }
   if (params.status) url.searchParams.set('status', params.status);
 
-  const res = await fetch(url.toString());
-  if (!res.ok) {
-    throw new Error(`Failed to fetch stations: ${res.status}`);
+  let data: BackendStation[];
+  try {
+    data = await fetchBackendStationsJson(url.toString());
+  } catch (apiErr) {
+    try {
+      data = await fetchBackendStationsJson(staticStationsSnapshotUrl());
+      if (import.meta.env.DEV) {
+        console.warn('[stations] API unreachable, loaded static snapshot', apiErr);
+      }
+    } catch {
+      throw apiErr;
+    }
   }
-  const data = (await res.json()) as BackendStation[];
   return data.map(mapBackendToFront);
 }
 
