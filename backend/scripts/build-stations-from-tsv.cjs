@@ -79,6 +79,40 @@ function canonicalNetwork(name) {
   return first || 'Unknown';
 }
 
+function inferConnectorTypes(textA, textB) {
+  const text = `${textA ?? ''} ${textB ?? ''}`.toLowerCase();
+  const out = new Set();
+
+  if (/\bccs2\b/.test(text)) out.add('CCS2');
+  if (/\bchademo\b/.test(text) || /\bcha\-?de\-?mo\b/.test(text)) out.add('CHAdeMO');
+  if (/\btype2\b/.test(text) || /\btype\s*2\b/.test(text)) out.add('Type2');
+  if (/\bgb\/?t\b/.test(text) || /\bgbt\b/.test(text)) out.add('GB/T');
+
+  // Backend doesn't have J1772, so map it to "Other" (still contract-valid).
+  if (/\bj1772\b/.test(text)) out.add('Other');
+
+  return Array.from(out);
+}
+
+function inferMaxPowerKw(textA, textB) {
+  const text = `${textA ?? ''} ${textB ?? ''}`.toLowerCase();
+  const m = text.match(/(\d+(?:\.\d+)?)\s*(kw|квт)\b/);
+  if (!m) return null;
+  const n = Number(m[1]);
+  if (!Number.isFinite(n)) return null;
+  // Keep integers for simpler downstream UX.
+  return Math.round(n);
+}
+
+function inferPortsCount(textA, textB) {
+  const text = `${textA ?? ''} ${textB ?? ''}`.toLowerCase();
+  const m = text.match(/(\d+)\s*(ports?|порт(?:а|ов)?)\b/);
+  if (!m) return null;
+  const n = Number(m[1]);
+  if (!Number.isFinite(n)) return null;
+  return Math.max(0, Math.round(n));
+}
+
 function parseTsv(content) {
   const lines = content.split(/\r?\n/).filter((ln) => ln.trim().length);
   if (!lines.length) return [];
@@ -118,6 +152,9 @@ function main() {
     seen.add(key);
 
     const openingHours = mapOpeningHours(row.hoursRaw);
+    const connectorTypes = inferConnectorTypes(row.name, row.address);
+    const maxPowerKw = inferMaxPowerKw(row.name, row.address);
+    const portsCount = inferPortsCount(row.name, row.address);
 
     out.push({
       id: stableId(lat, lon, network),
@@ -126,9 +163,9 @@ function main() {
       latitude: lat,
       longitude: lon,
       network,
-      connectorTypes: [],
-      maxPowerKw: null,
-      portsCount: null,
+      connectorTypes,
+      maxPowerKw,
+      portsCount,
       status: 'unknown',
       openingHours,
     });

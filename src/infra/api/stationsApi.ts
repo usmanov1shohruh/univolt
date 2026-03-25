@@ -5,6 +5,7 @@ import type {
   ConnectorType,
   ChargingSpeed,
 } from '@/types/station';
+import { z } from 'zod';
 
 /** Absolute URL or same-origin path. Honors Vite BASE_URL so mini-app under a subpath still hits the API. */
 function resolveApiBaseUrl(): string {
@@ -24,29 +25,54 @@ function staticStationsSnapshotUrl(): string {
   return new URL('stations.json', new URL(base, window.location.origin).href).href;
 }
 
-async function fetchBackendStationsJson(url: string): Promise<BackendStation[]> {
+export interface BackendStationsPage {
+  items: BackendStation[];
+  total: number;
+}
+
+async function fetchBackendStationsJson(url: string): Promise<BackendStationsPage> {
   const res = await fetch(url);
   if (!res.ok) {
     throw new Error(`Failed to fetch stations: ${res.status}`);
   }
-  return (await res.json()) as BackendStation[];
+  const json = await res.json();
+  const parsed = BackendStationsResponseSchema.parse(json);
+  if (Array.isArray(parsed)) {
+    return { items: parsed, total: parsed.length };
+  }
+  return parsed;
 }
 
-type BackendStationStatus = 'available' | 'busy' | 'offline' | 'unknown';
+export const BackendConnectorTypeSchema = z.enum(['CCS2', 'CHAdeMO', 'Type2', 'GB/T', 'Other']);
+export type BackendConnectorType = z.infer<typeof BackendConnectorTypeSchema>;
 
-interface BackendStation {
-  id: string;
-  name: string;
-  address: string;
-  latitude: number;
-  longitude: number;
-  network: string;
-  connectorTypes: string[];
-  maxPowerKw: number | null;
-  portsCount: number | null;
-  status: BackendStationStatus;
-  openingHours: string | null;
-}
+export const BackendStationStatusSchema = z.enum(['available', 'busy', 'offline', 'unknown']);
+export type BackendStationStatus = z.infer<typeof BackendStationStatusSchema>;
+
+export const BackendStationSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  address: z.string(),
+  latitude: z.number(),
+  longitude: z.number(),
+  network: z.string(),
+  connectorTypes: z.array(BackendConnectorTypeSchema),
+  maxPowerKw: z.number().nullable(),
+  portsCount: z.number().nullable(),
+  status: BackendStationStatusSchema,
+  openingHours: z.string().nullable(),
+});
+export type BackendStation = z.infer<typeof BackendStationSchema>;
+
+const BackendStationsArrayResponseSchema = z.array(BackendStationSchema);
+export const BackendStationsPageResponseSchema = z.object({
+  items: BackendStationsArrayResponseSchema,
+  total: z.number().int().nonnegative(),
+});
+export const BackendStationsResponseSchema = z.union([
+  BackendStationsPageResponseSchema,
+  BackendStationsArrayResponseSchema,
+]);
 
 export interface StationsQueryParams {
   search?: string;
@@ -54,6 +80,23 @@ export interface StationsQueryParams {
   connectorType?: ConnectorType;
   minPowerKw?: number;
   status?: AvailabilityStatus;
+
+  // BBox (map bounds) filtering
+  minLat?: number;
+  minLon?: number;
+  maxLat?: number;
+  maxLon?: number;
+
+  // Optional pagination
+  offset?: number;
+  limit?: number;
+}
+
+export interface MapBBox {
+  minLat: number;
+  minLon: number;
+  maxLat: number;
+  maxLon: number;
 }
 
 function mapBackendStatusToAvailability(status: BackendStationStatus): AvailabilityStatus {
@@ -87,9 +130,12 @@ function chargingSpeedFromKw(kw: number | null): ChargingSpeed {
   return 'slow_ac';
 }
 
-function mapBackendToFront(station: BackendStation): Station {
+export function mapBackendToFront(station: BackendStation): Station {
   const availability_status = mapBackendStatusToAvailability(station.status);
   const maxKw = station.maxPowerKw ?? null;
+  const connector_types = station.connectorTypes.filter(
+    (c): c is ConnectorType => c !== 'Other',
+  );
 
   return {
     id: station.id,
@@ -99,7 +145,7 @@ function mapBackendToFront(station: BackendStation): Station {
     district: parseDistrictFromAddress(station.address),
     latitude: station.latitude,
     longitude: station.longitude,
-    connector_types: station.connectorTypes as ConnectorType[],
+    connector_types,
     max_power_kw: maxKw,
     charging_speed_category: chargingSpeedFromKw(maxKw),
     hours: station.openingHours ?? '',
@@ -120,7 +166,11 @@ function mapBackendToFront(station: BackendStation): Station {
   };
 }
 
-export function buildStationsQueryParams(filters: Filters, searchQuery: string): StationsQueryParams {
+export function buildStationsQueryParams(
+  filters: Filters,
+  searchQuery: string,
+  bbox?: MapBBox | null,
+): StationsQueryParams {
   const params: StationsQueryParams = {};
 
   if (searchQuery.trim()) {
@@ -139,10 +189,24 @@ export function buildStationsQueryParams(filters: Filters, searchQuery: string):
     params.network = filters.operators[0];
   }
 
+  if (bbox) {
+    params.minLat = bbox.minLat;
+    params.minLon = bbox.minLon;
+    params.maxLat = bbox.maxLat;
+    params.maxLon = bbox.maxLon;
+  }
+
   return params;
 }
 
-export async function fetchStationsFromApi(params: StationsQueryParams): Promise<Station[]> {
+export interface StationsPage {
+  items: Station[];
+  total: number;
+}
+
+export async function fetchStationsFromApi(
+  params: StationsQueryParams,
+): Promise<StationsPage> {
   const baseUrl = API_BASE_URL.startsWith('http')
     ? API_BASE_URL
     : new URL(API_BASE_URL, window.location.origin).toString();
@@ -155,8 +219,14 @@ export async function fetchStationsFromApi(params: StationsQueryParams): Promise
     url.searchParams.set('minPowerKw', String(params.minPowerKw));
   }
   if (params.status) url.searchParams.set('status', params.status);
+  if (typeof params.minLat === 'number') url.searchParams.set('minLat', String(params.minLat));
+  if (typeof params.minLon === 'number') url.searchParams.set('minLon', String(params.minLon));
+  if (typeof params.maxLat === 'number') url.searchParams.set('maxLat', String(params.maxLat));
+  if (typeof params.maxLon === 'number') url.searchParams.set('maxLon', String(params.maxLon));
+  if (typeof params.offset === 'number') url.searchParams.set('offset', String(params.offset));
+  if (typeof params.limit === 'number') url.searchParams.set('limit', String(params.limit));
 
-  let data: BackendStation[];
+  let data: BackendStationsPage;
   try {
     data = await fetchBackendStationsJson(url.toString());
   } catch (apiErr) {
@@ -169,6 +239,6 @@ export async function fetchStationsFromApi(params: StationsQueryParams): Promise
       throw apiErr;
     }
   }
-  return data.map(mapBackendToFront);
+  return { items: data.items.map(mapBackendToFront), total: data.total };
 }
 

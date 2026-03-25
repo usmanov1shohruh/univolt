@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback, useEffect } from 'react';
+import React, { createContext, useContext, useState, useCallback, useEffect, useMemo } from 'react';
 import { Station, Filters, defaultFilters } from '@/types/station';
 import { filterStations, countActiveFilters } from "@/domain/stations/filtering";
 import { loadFavorites, saveFavorites } from "@/infra/storage/favoritesStorage";
@@ -6,7 +6,7 @@ import { loadOnboardingSeen, saveOnboardingSeen } from "@/infra/storage/onboardi
 import { loadHasSelectedLanguage, saveLanguageSelected } from "@/infra/storage/languageFlagsStorage";
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { buildStationsQueryParams, fetchStationsFromApi } from '@/infra/api/stationsApi';
+import { buildStationsQueryParams, fetchStationsFromApi, type MapBBox } from '@/infra/api/stationsApi';
 import { useI18n } from '@/lib/i18n';
 
 interface AppState {
@@ -16,6 +16,8 @@ interface AppState {
   favorites: string[];
   filters: Filters;
   searchQuery: string;
+  mapBbox: MapBBox | null;
+  stationsTotal: number;
   hasSeenOnboarding: boolean;
   hasSelectedLanguage: boolean;
   isLoading: boolean;
@@ -23,6 +25,7 @@ interface AppState {
   toggleFavorite: (id: string) => void;
   setFilters: (f: Filters) => void;
   setSearchQuery: (q: string) => void;
+  setMapBbox: (bbox: MapBBox | null) => void;
   completeOnboarding: () => void;
   completeLanguageSelection: () => void;
   activeFiltersCount: number;
@@ -42,6 +45,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [favorites, setFavorites] = useState<string[]>(() => loadFavorites());
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [searchQuery, setSearchQuery] = useState('');
+  const [mapBbox, setMapBbox] = useState<MapBBox | null>(null);
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(() => loadOnboardingSeen());
   const [hasSelectedLanguage, setHasSelectedLanguage] = useState(() => loadHasSelectedLanguage());
   const [isLoading, setIsLoading] = useState(true);
@@ -61,16 +65,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setHasSelectedLanguage(true);
   }, []);
 
+  // Split filters by where they matter:
+  // - `remoteQueryParams` affects the HTTP request (backend filtering)
+  // - `filters` are applied locally for the final result set
+  const localFilters = filters;
+  const remoteQueryParams = useMemo(
+    () => buildStationsQueryParams(localFilters, searchQuery, mapBbox),
+    [localFilters, searchQuery, mapBbox],
+  );
+
   const {
-    data: apiStations = [],
+    data: stationsPage,
     isLoading: isStationsLoading,
     isError: isStationsError,
     error: stationsError,
   } = useQuery({
-    queryKey: ['stations', filters, searchQuery],
-    queryFn: () => fetchStationsFromApi(buildStationsQueryParams(filters, searchQuery)),
+    queryKey: ['stations', remoteQueryParams],
+    queryFn: () => fetchStationsFromApi(remoteQueryParams),
     retry: 2,
   });
+
+  const apiStations = stationsPage?.items ?? [];
+  const stationsTotal = stationsPage?.total ?? 0;
 
   useEffect(() => {
     setIsLoading(isStationsLoading);
@@ -82,7 +98,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     toast.error(t('station.load_error'));
   }, [isStationsError, stationsError, t]);
 
-  const filteredStations = filterStations(apiStations, filters, searchQuery);
+  const filteredStations = filterStations(apiStations, localFilters, searchQuery);
 
   return (
     <AppContext.Provider value={{
@@ -92,6 +108,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       favorites,
       filters,
       searchQuery,
+      mapBbox,
+      stationsTotal,
       hasSeenOnboarding,
       hasSelectedLanguage,
       isLoading,
@@ -99,6 +117,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       toggleFavorite,
       setFilters,
       setSearchQuery,
+      setMapBbox,
       completeOnboarding,
       completeLanguageSelection,
       activeFiltersCount: countActiveFilters(filters),

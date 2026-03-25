@@ -1,14 +1,33 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X } from 'lucide-react';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/lib/i18n';
-import { Filters, ConnectorType, ChargingSpeed, AvailabilityStatus, ParkingType, defaultFilters } from '@/types/station';
+import {
+  Filters,
+  ConnectorType,
+  ChargingSpeed,
+  AvailabilityStatus,
+  ParkingType,
+  defaultFilters,
+} from '@/types/station';
 
-const CONNECTOR_OPTIONS: ConnectorType[] = ['CCS2', 'GB/T', 'Type2', 'CHAdeMO', 'J1772'];
-const SPEED_OPTIONS: ChargingSpeed[] = ['slow_ac', 'medium', 'fast_dc', 'ultra_fast'];
-const STATUS_OPTIONS: AvailabilityStatus[] = ['available', 'busy', 'unknown', 'limited'];
-const PARKING_OPTIONS: ParkingType[] = ['mall', 'hotel', 'business_center', 'residential', 'standalone', 'gas_station'];
+function sortByPreferredOrder<T extends string>(values: T[], preferred: readonly T[]): T[] {
+  const pos = new Map<T, number>(preferred.map((v, i) => [v, i]));
+  return [...values].sort((a, b) => (pos.get(a) ?? 1e9) - (pos.get(b) ?? 1e9) || a.localeCompare(b));
+}
+
+const CONNECTOR_PREFERRED_ORDER: readonly ConnectorType[] = ['CCS2', 'GB/T', 'Type2', 'CHAdeMO', 'J1772'];
+const SPEED_PREFERRED_ORDER: readonly ChargingSpeed[] = ['slow_ac', 'medium', 'fast_dc', 'ultra_fast', 'unknown'];
+const STATUS_PREFERRED_ORDER: readonly AvailabilityStatus[] = ['available', 'busy', 'limited', 'unknown'];
+const PARKING_PREFERRED_ORDER: readonly ParkingType[] = [
+  'mall',
+  'hotel',
+  'business_center',
+  'residential',
+  'standalone',
+  'gas_station',
+];
 
 function ChipToggle<T extends string>({ options, selected, onToggle, labelFn }: {
   options: T[]; selected: T[]; onToggle: (v: T) => void; labelFn: (v: T) => string;
@@ -51,6 +70,34 @@ export default function FilterSheet({ isOpen, onClose }: Props) {
 
   const operators = [...new Set(stations.map(s => s.operator))].sort((a, b) => a.localeCompare(b));
   const districts = [...new Set(stations.map(s => s.district).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+  const connectorOptions = useMemo(
+    () => sortByPreferredOrder(Array.from(new Set(stations.flatMap((s) => s.connector_types))), CONNECTOR_PREFERRED_ORDER),
+    [stations],
+  );
+  const speedOptions = useMemo(
+    () =>
+      sortByPreferredOrder(
+        Array.from(new Set(stations.map((s) => s.charging_speed_category))),
+        SPEED_PREFERRED_ORDER,
+      ),
+    [stations],
+  );
+  const availabilityOptions = useMemo(
+    () =>
+      sortByPreferredOrder(
+        Array.from(new Set(stations.map((s) => s.availability_status))),
+        STATUS_PREFERRED_ORDER,
+      ),
+    [stations],
+  );
+  const parkingOptions = useMemo(
+    () =>
+      sortByPreferredOrder(
+        Array.from(new Set(stations.map((s) => s.parking_type))),
+        PARKING_PREFERRED_ORDER,
+      ),
+    [stations],
+  );
 
   return (
     <AnimatePresence>
@@ -72,13 +119,28 @@ export default function FilterSheet({ isOpen, onClose }: Props) {
 
             <div className="flex-1 overflow-y-auto px-5 pb-4 space-y-5">
               <FilterSection label={t('filter.connector_type')}>
-                <ChipToggle options={CONNECTOR_OPTIONS} selected={local.connector_types} onToggle={v => toggle('connector_types', v)} labelFn={v => v} />
+                <ChipToggle
+                  options={connectorOptions}
+                  selected={local.connector_types}
+                  onToggle={(v) => toggle('connector_types', v)}
+                  labelFn={(v) => v}
+                />
               </FilterSection>
               <FilterSection label={t('filter.charging_speed')}>
-                <ChipToggle options={SPEED_OPTIONS} selected={local.charging_speeds} onToggle={v => toggle('charging_speeds', v)} labelFn={v => t(`speed.${v}`)} />
+                <ChipToggle
+                  options={speedOptions}
+                  selected={local.charging_speeds}
+                  onToggle={(v) => toggle('charging_speeds', v)}
+                  labelFn={(v) => t(`speed.${v}`)}
+                />
               </FilterSection>
               <FilterSection label={t('filter.availability')}>
-                <ChipToggle options={STATUS_OPTIONS} selected={local.availability} onToggle={v => toggle('availability', v)} labelFn={v => t(`status.${v}`)} />
+                <ChipToggle
+                  options={availabilityOptions}
+                  selected={local.availability}
+                  onToggle={(v) => toggle('availability', v)}
+                  labelFn={(v) => t(`status.${v}`)}
+                />
               </FilterSection>
               <FilterSection label={t('filter.24_7')}>
                 <div className="flex gap-1.5">
@@ -93,7 +155,12 @@ export default function FilterSheet({ isOpen, onClose }: Props) {
                 </div>
               </FilterSection>
               <FilterSection label={t('filter.parking_type')}>
-                <ChipToggle options={PARKING_OPTIONS} selected={local.parking_types} onToggle={v => toggle('parking_types', v)} labelFn={v => t(`parking.${v}`)} />
+                <ChipToggle
+                  options={parkingOptions}
+                  selected={local.parking_types}
+                  onToggle={(v) => toggle('parking_types', v)}
+                  labelFn={(v) => t(`parking.${v}`)}
+                />
               </FilterSection>
               <FilterSection label={t('filter.operator')}>
                 <ChipToggle options={operators} selected={local.operators} onToggle={v => toggle('operators', v)} labelFn={v => v} />

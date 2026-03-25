@@ -1,27 +1,25 @@
 import { Controller, Get, Param, Query } from '@nestjs/common';
-import {
-  StationFilters,
-  StationsService,
-} from './stations.service';
+import { StationFilters, StationsService } from './stations.service';
+import { GetStationsQueryDto } from './dto/get-stations-query.dto';
 
 @Controller('stations')
 export class StationsController {
   constructor(private readonly stationsService: StationsService) {}
 
   @Get()
-  getStations(
-    @Query('search') search?: string,
-    @Query('network') network?: string,
-    @Query('connectorType') connectorType?: string,
-    @Query('minPowerKw') minPowerKw?: string,
-    @Query('status') status?: string,
-  ) {
+  getStations(@Query() query: GetStationsQueryDto) {
     const filters: StationFilters = {
-      search,
-      network,
-      connectorType: connectorType as any,
-      minPowerKw: minPowerKw ? Number(minPowerKw) : undefined,
-      status: status as any,
+      search: query.search,
+      network: query.network,
+      connectorType: query.connectorType,
+      minPowerKw: query.minPowerKw,
+      status: query.status,
+      minLat: query.minLat,
+      minLon: query.minLon,
+      maxLat: query.maxLat,
+      maxLon: query.maxLon,
+      offset: query.offset,
+      limit: query.limit,
     };
     return this.stationsService.findAll(filters);
   }
