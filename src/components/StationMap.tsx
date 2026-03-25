@@ -30,7 +30,7 @@ function createIcon(
   const size = isSelected ? 32 : 24;
   const border = isSelected ? foreground : color;
   const logoHtml = logoUrl
-    ? `<img src="${logoUrl}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;" />`
+    ? `<img src="${logoUrl}" alt="" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;transform:scale(1.18);transform-origin:center;" />`
     : '';
   const fallbackSvg = `<svg width="${size * 0.42}" height="${size * 0.42}" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
@@ -177,6 +177,7 @@ export default function StationMap({ stations, onStationSelect, resizeSignal }: 
                         width={18}
                         height={18}
                         className="w-[18px] h-[18px] object-cover rounded-full block"
+                        style={{ transform: 'scale(1.18)', transformOrigin: 'center' }}
                         loading="eager"
                       />
                     ) : (
