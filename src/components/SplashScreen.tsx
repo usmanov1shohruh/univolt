@@ -7,8 +7,7 @@ export default function SplashScreen() {
     <div className="fixed inset-0 bg-background flex items-center justify-center z-50">
       {/* Ambient glow */}
       <div className="absolute inset-0 overflow-hidden">
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full opacity-[0.07]"
-          style={{ background: 'radial-gradient(circle, hsl(190 100% 50%), transparent 70%)' }} />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[400px] h-[400px] rounded-full opacity-[0.07] gradient-brand-radial" />
       </div>
 
       <motion.div
@@ -21,8 +20,7 @@ export default function SplashScreen() {
           initial={{ scale: 0.9, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 0.6, delay: 0.2, ease: [0.16, 1, 0.3, 1] }}
-          className="w-16 h-16 rounded-2xl flex items-center justify-center mb-8"
-          style={{ background: 'linear-gradient(135deg, hsl(190 100% 50% / 0.15), hsl(190 100% 50% / 0.05))' }}
+          className="w-16 h-16 rounded-2xl flex items-center justify-center mb-8 bg-brand-panel"
         >
           <svg width="32" height="32" viewBox="0 0 40 40" fill="none" className="text-primary">
             <path d="M22 4L8 24h10l-2 12 14-20H20l2-12z" fill="currentColor" />

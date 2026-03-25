@@ -1,6 +1,6 @@
 import type { Station, Filters, AvailabilityStatus, ConnectorType } from '@/types/station';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3000';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/_/backend';
 
 type BackendStationStatus = 'available' | 'busy' | 'offline' | 'unknown';
 
@@ -102,7 +102,10 @@ export function buildStationsQueryParams(filters: Filters, searchQuery: string):
 }
 
 export async function fetchStationsFromApi(params: StationsQueryParams): Promise<Station[]> {
-  const url = new URL('/stations', API_BASE_URL);
+  const baseUrl = API_BASE_URL.startsWith('http')
+    ? API_BASE_URL
+    : new URL(API_BASE_URL, window.location.origin).toString();
+  const url = new URL('stations', `${baseUrl.replace(/\/$/, '')}/`);
 
   if (params.search) url.searchParams.set('search', params.search);
   if (params.network) url.searchParams.set('network', params.network);

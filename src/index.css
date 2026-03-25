@@ -4,11 +4,71 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ── Design tokens: light (default) / dark (.dark) — preset themes. Telegram system mode may override via inline vars. ── */
 @layer base {
   :root {
     --app-height: 100dvh;
     --app-safe-top: 0px;
     --app-safe-bottom: 0px;
+
+    --background: 210 20% 98%;
+    --foreground: 222 47% 11%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --card-elevated: 210 20% 96%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 47% 11%;
+
+    --primary: 190 100% 36%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 210 18% 93%;
+    --secondary-foreground: 222 35% 16%;
+
+    --muted: 210 18% 93%;
+    --muted-foreground: 215 16% 40%;
+
+    --accent: 190 90% 38%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 72% 48%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 214 20% 88%;
+    --input: 214 20% 90%;
+    --ring: 190 100% 36%;
+
+    --radius: 0.75rem;
+
+    --status-available: 199 89% 38%;
+    --status-busy: 0 72% 48%;
+    --status-unknown: 215 14% 46%;
+    --status-limited: 38 80% 42%;
+
+    --surface: 0 0% 100%;
+    --surface-elevated: 210 20% 96%;
+
+    --sidebar-background: 210 20% 96%;
+    --sidebar-foreground: 222 47% 11%;
+    --sidebar-primary: 190 100% 36%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 210 18% 93%;
+    --sidebar-accent-foreground: 222 47% 11%;
+    --sidebar-border: 214 20% 88%;
+    --sidebar-ring: 190 100% 36%;
+
+    --font-display: 'Outfit', sans-serif;
+    --font-body: 'Inter', sans-serif;
+
+    --shadow-card-opacity-1: 0.06;
+    --shadow-card-opacity-2: 0.04;
+    --shadow-elevated-opacity-1: 0.08;
+    --shadow-elevated-opacity-2: 0.05;
+  }
+
+  .dark {
     --background: 222 25% 4%;
     --foreground: 0 0% 96%;
 
@@ -26,7 +86,7 @@
     --secondary-foreground: 0 0% 90%;
 
     --muted: 220 15% 11%;
-    --muted-foreground: 215 15% 55%;
+    --muted-foreground: 215 14% 68%;
 
     --accent: 190 100% 50%;
     --accent-foreground: 222 25% 4%;
@@ -37,8 +97,6 @@
     --border: 220 12% 14%;
     --input: 220 12% 14%;
     --ring: 190 100% 50%;
-
-    --radius: 0.75rem;
 
     --status-available: 199 89% 48%;
     --status-busy: 0 72% 65%;
@@ -57,8 +115,10 @@
     --sidebar-border: 220 12% 14%;
     --sidebar-ring: 190 100% 50%;
 
-    --font-display: 'Outfit', sans-serif;
-    --font-body: 'Inter', sans-serif;
+    --shadow-card-opacity-1: 0.2;
+    --shadow-card-opacity-2: 0.15;
+    --shadow-elevated-opacity-1: 0.4;
+    --shadow-elevated-opacity-2: 0.2;
   }
 }
 
@@ -79,10 +139,15 @@
     font-family: var(--font-display);
   }
 
-  /* Telegram Mini App: match Telegram chrome + theme (see src/telegram/webApp.ts) */
   html.telegram-mini-app body {
-    background-color: var(--tg-theme-bg-color, hsl(var(--background)));
-    color: var(--tg-theme-text-color, hsl(var(--foreground)));
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+
+  html.telegram-mini-app .surface-glass {
+    background: hsl(var(--card) / 0.94);
+    backdrop-filter: blur(20px) saturate(1.2);
+    -webkit-backdrop-filter: blur(20px) saturate(1.2);
   }
 }
 
@@ -95,16 +160,28 @@
   }
   .text-gradient-primary {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(190 100% 50%), hsl(199 89% 68%));
+    background-image: linear-gradient(135deg, hsl(var(--primary)), hsl(199 89% 58%));
   }
   .glow-primary {
-    box-shadow: 0 0 24px -4px hsl(190 100% 50% / 0.35);
+    box-shadow: 0 0 24px -4px hsl(var(--primary) / 0.35);
   }
   .glow-primary-subtle {
-    box-shadow: 0 0 12px -4px hsl(190 100% 50% / 0.2);
+    box-shadow: 0 0 12px -4px hsl(var(--primary) / 0.22);
+  }
+  .bg-brand-panel {
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.15), hsl(var(--primary) / 0.05));
+  }
+  .bg-brand-panel-soft {
+    background: linear-gradient(135deg, hsl(var(--primary) / 0.12), hsl(var(--primary) / 0.04));
+  }
+  .gradient-brand-radial {
+    background: radial-gradient(circle, hsl(var(--primary)), transparent 70%);
+  }
+  .gradient-brand-fade-up {
+    background: linear-gradient(to top, hsl(var(--primary)), transparent);
   }
   .surface-glass {
-    background: hsl(220 20% 8% / 0.85);
+    background: hsl(var(--card) / 0.85);
     backdrop-filter: blur(20px) saturate(1.2);
     -webkit-backdrop-filter: blur(20px) saturate(1.2);
   }
@@ -121,30 +198,36 @@
     padding-top: calc(max(env(safe-area-inset-top, 0px), var(--app-safe-top, 0px)) + 44px);
   }
   .shadow-card {
-    box-shadow: 0 1px 3px 0 hsl(0 0% 0% / 0.2), 0 1px 2px -1px hsl(0 0% 0% / 0.15);
+    box-shadow:
+      0 1px 3px 0 hsl(0 0% 0% / var(--shadow-card-opacity-1, 0.12)),
+      0 1px 2px -1px hsl(0 0% 0% / var(--shadow-card-opacity-2, 0.08));
   }
   .shadow-elevated {
-    box-shadow: 0 4px 24px -4px hsl(0 0% 0% / 0.4), 0 2px 8px -2px hsl(0 0% 0% / 0.2);
+    box-shadow:
+      0 4px 24px -4px hsl(0 0% 0% / var(--shadow-elevated-opacity-1, 0.18)),
+      0 2px 8px -2px hsl(0 0% 0% / var(--shadow-elevated-opacity-2, 0.1));
   }
 }
 
-/* Leaflet overrides */
+/* Leaflet — always follows CSS variables (see ThemeProvider + Telegram overrides). */
 .leaflet-container {
-  background: hsl(222 25% 4%) !important;
+  background: hsl(var(--background)) !important;
 }
 
 .leaflet-control-zoom {
   border: none !important;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.4) !important;
+  box-shadow:
+    0 4px 20px hsl(0 0% 0% / 0.18),
+    0 1px 2px hsl(0 0% 0% / 0.06) !important;
   border-radius: 12px !important;
   overflow: hidden !important;
 }
 
 .leaflet-control-zoom a {
-  background: hsl(220, 20%, 8%) !important;
-  color: hsl(0, 0%, 80%) !important;
+  background: hsl(var(--card)) !important;
+  color: hsl(var(--muted-foreground)) !important;
   border: none !important;
-  border-bottom: 1px solid hsl(220, 12%, 14%) !important;
+  border-bottom: 1px solid hsl(var(--border)) !important;
   width: 36px !important;
   height: 36px !important;
   line-height: 36px !important;
@@ -156,16 +239,16 @@
 }
 
 .leaflet-control-zoom a:hover {
-  background: hsl(220, 18%, 12%) !important;
-  color: white !important;
+  background: hsl(var(--card-elevated)) !important;
+  color: hsl(var(--foreground)) !important;
 }
 
 .leaflet-popup-content-wrapper {
-  background: hsl(220, 20%, 8%) !important;
-  color: hsl(0, 0%, 96%) !important;
+  background: hsl(var(--card)) !important;
+  color: hsl(var(--card-foreground)) !important;
   border-radius: 14px !important;
-  box-shadow: 0 8px 40px rgba(0,0,0,0.5) !important;
-  border: 1px solid hsl(220, 12%, 14%) !important;
+  box-shadow: 0 8px 40px hsl(0 0% 0% / 0.2) !important;
+  border: 1px solid hsl(var(--border)) !important;
   padding: 0 !important;
 }
 
@@ -174,25 +257,23 @@
 }
 
 .leaflet-popup-tip {
-  background: hsl(220, 20%, 8%) !important;
-  border: 1px solid hsl(220, 12%, 14%) !important;
+  background: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
   box-shadow: none !important;
 }
 
 .leaflet-popup-close-button {
-  color: hsl(215, 15%, 55%) !important;
+  color: hsl(var(--muted-foreground)) !important;
   font-size: 18px !important;
   top: 6px !important;
   right: 8px !important;
 }
 
-/* Custom marker reset */
 .custom-marker {
   background: none !important;
   border: none !important;
 }
 
-/* Scrollbar */
 ::-webkit-scrollbar {
   width: 3px;
 }
@@ -200,15 +281,14 @@
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: hsl(220, 12%, 16%);
+  background: hsl(var(--border));
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(220, 12%, 22%);
+  background: hsl(var(--muted-foreground) / 0.35);
 }
 
-/* Selection */
 ::selection {
-  background: hsl(190 100% 50% / 0.2);
-  color: white;
+  background: hsl(var(--primary) / 0.25);
+  color: hsl(var(--foreground));
 }

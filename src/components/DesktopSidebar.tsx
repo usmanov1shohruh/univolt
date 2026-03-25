@@ -19,8 +19,7 @@ export default function DesktopSidebar({ stations, onStationSelect, onOpenFilter
     <div className="hidden lg:flex flex-col w-[400px] h-screen bg-background shrink-0 border-r border-border/50">
       {/* Header */}
       <div className="px-5 py-4 flex items-center gap-3">
-        <div className="w-8 h-8 rounded-lg flex items-center justify-center"
-          style={{ background: 'linear-gradient(135deg, hsl(190 100% 50% / 0.15), hsl(190 100% 50% / 0.05))' }}>
+        <div className="w-8 h-8 rounded-lg flex items-center justify-center bg-brand-panel">
           <svg width="16" height="16" viewBox="0 0 40 40" fill="none" className="text-primary">
             <path d="M22 4L8 24h10l-2 12 14-20H20l2-12z" fill="currentColor" />
           </svg>

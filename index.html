@@ -1,9 +1,28 @@
 <!doctype html>
-<html lang="ru" class="dark">
+<html lang="ru">
   <head>
+    <!-- Theme class before paint: must match THEME_MODE_STORAGE_KEY in src/infra/storage/themeModeStorage.ts -->
+    <script>
+      (function () {
+        try {
+          var key = "univolt-theme-mode";
+          var mode = localStorage.getItem(key);
+          var dark = false;
+          if (mode === "dark") dark = true;
+          else if (mode === "light") dark = false;
+          else {
+            dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+          }
+          document.documentElement.classList.toggle("dark", dark);
+        } catch (e) {
+          /* ignore */
+        }
+      })();
+    </script>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1" />
-    <meta name="theme-color" content="#0A0C10" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#f4f7fb" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0A0C10" />
     <title>UniVolt — Зарядные станции Ташкента</title>
     <meta name="description" content="UniVolt — зарядные станции Ташкента в одном приложении. Находите ближайшие ЭЗС, сравнивайте и выбирайте.">
     

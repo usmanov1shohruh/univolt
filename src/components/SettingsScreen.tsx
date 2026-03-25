@@ -1,5 +1,18 @@
 import { useI18n, Locale } from '@/lib/i18n';
-import { Globe, Info, Zap, MapPin, CreditCard, Calendar, Check } from 'lucide-react';
+import {
+  Calendar,
+  Check,
+  CreditCard,
+  Globe,
+  Info,
+  MapPin,
+  Monitor,
+  Moon,
+  Sun,
+  Zap,
+} from 'lucide-react';
+import { useAppTheme } from '@/theme/ThemeProvider';
+import type { ThemeMode } from '@/theme/types';
 
 const languages: { id: Locale; name: string; native: string }[] = [
   { id: 'ru', name: 'Русский', native: 'RU' },
@@ -14,12 +27,48 @@ const comingSoon = [
   { icon: MapPin, label: 'settings.coming.routes' },
 ];
 
+const themeOptions: { id: ThemeMode; icon: typeof Monitor; labelKey: string }[] = [
+  { id: 'system', icon: Monitor, labelKey: 'settings.theme.system' },
+  { id: 'light', icon: Sun, labelKey: 'settings.theme.light' },
+  { id: 'dark', icon: Moon, labelKey: 'settings.theme.dark' },
+];
+
 export default function SettingsScreen() {
   const { locale, setLocale, t } = useI18n();
+  const { themeMode, setThemeMode } = useAppTheme();
 
   return (
     <div className="min-h-screen bg-background px-5 pt-14 pb-24">
       <h1 className="font-display text-lg font-semibold mb-6">{t('settings.title')}</h1>
+
+      {/* Appearance */}
+      <section className="mb-7">
+        <h3 className="text-[11px] text-muted-foreground/70 font-medium tracking-wide mb-2.5 flex items-center gap-1.5">
+          <Sun className="w-3 h-3" />
+          {t('settings.appearance')}
+        </h3>
+        <div className="bg-card rounded-xl border border-border/50 p-1 flex gap-1">
+          {themeOptions.map((opt) => {
+            const Icon = opt.icon;
+            const active = themeMode === opt.id;
+            return (
+              <button
+                key={opt.id}
+                type="button"
+                onClick={() => setThemeMode(opt.id)}
+                className={`flex-1 flex flex-col items-center gap-1.5 py-3 px-2 rounded-[10px] text-[11px] font-medium transition-all ${
+                  active
+                    ? 'bg-primary/12 text-foreground ring-1 ring-primary/35 shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'
+                }`}
+              >
+                <Icon className={`w-[18px] h-[18px] ${active ? 'text-primary' : 'opacity-80'}`} strokeWidth={active ? 2 : 1.5} />
+                <span className="leading-tight text-center">{t(opt.labelKey)}</span>
+              </button>
+            );
+          })}
+        </div>
+      </section>
 
       {/* Language */}
       <section className="mb-7">
@@ -54,8 +103,7 @@ export default function SettingsScreen() {
         </h3>
         <div className="bg-card rounded-xl border border-border/50 p-4">
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-9 h-9 rounded-lg flex items-center justify-center"
-              style={{ background: 'linear-gradient(135deg, hsl(190 100% 50% / 0.15), hsl(190 100% 50% / 0.05))' }}>
+            <div className="w-9 h-9 rounded-lg flex items-center justify-center bg-brand-panel">
               <svg width="18" height="18" viewBox="0 0 40 40" fill="none" className="text-primary">
                 <path d="M22 4L8 24h10l-2 12 14-20H20l2-12z" fill="currentColor" />
               </svg>

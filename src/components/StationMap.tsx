@@ -1,26 +1,39 @@
-import { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { useEffect, useMemo } from 'react';
+import { MapContainer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { Station } from '@/types/station';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/lib/i18n';
+import { useAppTheme } from '@/theme/ThemeProvider';
+import { MapBasemapLayer } from '@/components/map/MapBasemapLayer';
 
-function createIcon(isSelected: boolean, status: string) {
+function readCssHslTriplet(varName: string): string {
+  const raw = getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
+  return raw ? `hsl(${raw})` : 'hsl(215 16% 46%)';
+}
+
+function createIcon(
+  isSelected: boolean,
+  status: string,
+  colors: { available: string; busy: string; limited: string; unknown: string },
+  foreground: string,
+) {
   const colorMap: Record<string, string> = {
-    available: '#38BDF8',
-    busy: '#F87171',
-    limited: '#F59E0B',
-    unknown: '#64748B',
+    available: colors.available,
+    busy: colors.busy,
+    limited: colors.limited,
+    unknown: colors.unknown,
   };
-  const color = colorMap[status] || '#64748B';
+  const color = colorMap[status] || colors.unknown;
   const size = isSelected ? 32 : 24;
+  const border = isSelected ? foreground : color;
 
   return L.divIcon({
     className: 'custom-marker',
     html: `<div style="
       width:${size}px;height:${size}px;
       background:${color};
-      border:2px solid ${isSelected ? '#fff' : color};
+      border:2px solid ${border};
       border-radius:50%;
       box-shadow:0 2px 8px ${color}40${isSelected ? ',0 0 0 4px ' + color + '30' : ''};
       display:flex;align-items:center;justify-content:center;
@@ -100,6 +113,18 @@ function MapSizeController({ resizeSignal }: { resizeSignal?: string }) {
 export default function StationMap({ stations, onStationSelect, resizeSignal }: Props) {
   const { selectedStation } = useApp();
   const { t } = useI18n();
+  const { effectiveTheme } = useAppTheme();
+
+  const markerColors = useMemo(() => {
+    void effectiveTheme;
+    return {
+      available: readCssHslTriplet("--status-available"),
+      busy: readCssHslTriplet("--status-busy"),
+      limited: readCssHslTriplet("--status-limited"),
+      unknown: readCssHslTriplet("--status-unknown"),
+      foreground: readCssHslTriplet("--foreground"),
+    };
+  }, [effectiveTheme]);
 
   return (
     <MapContainer
@@ -109,14 +134,19 @@ export default function StationMap({ stations, onStationSelect, resizeSignal }: 
       zoomControl={false}
       attributionControl={false}
     >
-      <TileLayer url="https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png" />
+      <MapBasemapLayer mapTheme={effectiveTheme} />
       <MapUpdater selectedStation={selectedStation} />
       <MapSizeController resizeSignal={resizeSignal} />
       {stations.map(station => (
         <Marker
           key={station.id}
           position={[station.latitude, station.longitude]}
-          icon={createIcon(selectedStation?.id === station.id, station.availability_status)}
+          icon={createIcon(
+            selectedStation?.id === station.id,
+            station.availability_status,
+            markerColors,
+            markerColors.foreground,
+          )}
           eventHandlers={{ click: () => onStationSelect(station) }}
         >
           <Popup>

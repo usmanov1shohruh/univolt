@@ -49,10 +49,8 @@ export default function LanguageSelectScreen({ onComplete }: Props) {
     <div className="fixed inset-0 bg-background flex flex-col z-50 overflow-hidden">
       {/* Ambient background */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-[15%] left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full opacity-[0.04]"
-          style={{ background: 'radial-gradient(circle, hsl(190 100% 50%), transparent 65%)' }} />
-        <div className="absolute bottom-0 left-0 right-0 h-[200px] opacity-[0.03]"
-          style={{ background: 'linear-gradient(to top, hsl(190 100% 50%), transparent)' }} />
+        <div className="absolute top-[15%] left-1/2 -translate-x-1/2 w-[600px] h-[600px] rounded-full opacity-[0.04] gradient-brand-radial" />
+        <div className="absolute bottom-0 left-0 right-0 h-[200px] opacity-[0.03] gradient-brand-fade-up" />
       </div>
 
       <div className="flex-1 flex flex-col items-center justify-center px-6 relative z-10 max-w-[380px] mx-auto w-full">
@@ -63,8 +61,7 @@ export default function LanguageSelectScreen({ onComplete }: Props) {
           transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
           className="mb-12 flex flex-col items-center"
         >
-          <div className="w-[52px] h-[52px] rounded-[14px] flex items-center justify-center mb-4 relative"
-            style={{ background: 'linear-gradient(135deg, hsl(190 100% 50% / 0.12), hsl(190 100% 50% / 0.04))' }}>
+          <div className="w-[52px] h-[52px] rounded-[14px] flex items-center justify-center mb-4 relative bg-brand-panel-soft">
             <svg width="24" height="24" viewBox="0 0 40 40" fill="none" className="text-primary">
               <path d="M22 4L8 24h10l-2 12 14-20H20l2-12z" fill="currentColor" />
             </svg>
