@@ -21,12 +21,17 @@ interface Props {
   onBack: () => void;
 }
 
-type MapProvider = '2gis' | 'yandex' | 'google';
+type MapProvider = 'waze' | '2gis' | 'yandex' | 'google';
 
 /** Order shown in the picker (Yandex / 2GIS first for this region). */
-const ROUTE_PROVIDERS_ORDER: MapProvider[] = ['yandex', '2gis', 'google'];
+const ROUTE_PROVIDERS_ORDER: MapProvider[] = ['waze', 'yandex', '2gis', 'google'];
 
 const mapProviderMeta: Record<MapProvider, { label: string; icon: string; iconClassName: string }> = {
+  waze: {
+    label: 'Waze',
+    icon: 'W',
+    iconClassName: 'bg-[#33CCFF] text-black',
+  },
   '2gis': {
     label: '2GIS',
     icon: '2',
@@ -47,6 +52,10 @@ const mapProviderMeta: Record<MapProvider, { label: string; icon: string; iconCl
 function buildRouteUrl(provider: MapProvider, station: Station): string {
   const lat = station.latitude.toFixed(6);
   const lon = station.longitude.toFixed(6);
+
+  if (provider === 'waze') {
+    return `https://waze.com/ul?ll=${lat},${lon}&navigate=yes`;
+  }
 
   if (provider === 'google') {
     return `https://www.google.com/maps/dir/?api=1&destination=${lat},${lon}&travelmode=driving`;
