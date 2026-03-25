@@ -93,7 +93,7 @@ export default function StationCard({ station, onSelect, compact }: StationCardP
               alt=""
               width={14}
               height={14}
-              className="w-[14px] h-[14px] object-contain block"
+              className="w-[14px] h-[14px] object-cover rounded-full block"
               loading="eager"
             />
           ) : (

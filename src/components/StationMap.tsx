@@ -29,9 +29,8 @@ function createIcon(
   const color = colorMap[status] || colors.unknown;
   const size = isSelected ? 32 : 24;
   const border = isSelected ? foreground : color;
-  const logoSizePx = Math.max(10, Math.round(size * 0.5));
   const logoHtml = logoUrl
-    ? `<img src="${logoUrl}" alt="" width="${logoSizePx}" height="${logoSizePx}" style="object-fit:contain;display:block;" />`
+    ? `<img src="${logoUrl}" alt="" style="width:100%;height:100%;object-fit:cover;display:block;" />`
     : '';
   const fallbackSvg = `<svg width="${size * 0.42}" height="${size * 0.42}" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
@@ -44,6 +43,8 @@ function createIcon(
       background:${color};
       border:2px solid ${border};
       border-radius:50%;
+      overflow:hidden;
+      line-height:0;
       box-shadow:0 2px 8px ${color}40${isSelected ? ',0 0 0 4px ' + color + '30' : ''};
       display:flex;align-items:center;justify-content:center;
       transition:all 0.2s cubic-bezier(0.16,1,0.3,1);
@@ -175,7 +176,7 @@ export default function StationMap({ stations, onStationSelect, resizeSignal }: 
                         alt=""
                         width={18}
                         height={18}
-                        className="w-[18px] h-[18px] object-contain block"
+                        className="w-[18px] h-[18px] object-cover rounded-full block"
                         loading="eager"
                       />
                     ) : (

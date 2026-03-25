@@ -160,7 +160,7 @@ export default function StationDetail({ station, onBack }: Props) {
                   alt=""
                   width={18}
                   height={18}
-                  className="w-[18px] h-[18px] object-contain block shrink-0"
+                  className="w-[18px] h-[18px] object-cover rounded-full block shrink-0"
                   loading="eager"
                 />
               ) : (
