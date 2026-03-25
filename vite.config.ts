@@ -12,6 +12,14 @@ export default defineConfig(({ mode }) => ({
     hmr: {
       overlay: false,
     },
+    // Same URL shape as Vercel (`/_/backend/*` → Nest at root). Run backend: `cd backend && npm run start:dev`
+    proxy: {
+      "/_/backend": {
+        target: "http://127.0.0.1:3000",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/_\/backend/, ""),
+      },
+    },
   },
   plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
   resolve: {
