@@ -5,7 +5,9 @@ import { loadFavorites, saveFavorites } from "@/infra/storage/favoritesStorage";
 import { loadOnboardingSeen, saveOnboardingSeen } from "@/infra/storage/onboardingStorage";
 import { loadHasSelectedLanguage, saveLanguageSelected } from "@/infra/storage/languageFlagsStorage";
 import { useQuery } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { buildStationsQueryParams, fetchStationsFromApi } from '@/infra/api/stationsApi';
+import { useI18n } from '@/lib/i18n';
 
 interface AppState {
   stations: Station[];
@@ -35,6 +37,7 @@ export function useApp() {
 }
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
+  const { t } = useI18n();
   const [selectedStation, setSelectedStation] = useState<Station | null>(null);
   const [favorites, setFavorites] = useState<string[]>(() => loadFavorites());
   const [filters, setFilters] = useState<Filters>(defaultFilters);
@@ -58,14 +61,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setHasSelectedLanguage(true);
   }, []);
 
-  const { data: apiStations = [], isLoading: isStationsLoading } = useQuery({
+  const {
+    data: apiStations = [],
+    isLoading: isStationsLoading,
+    isError: isStationsError,
+    error: stationsError,
+  } = useQuery({
     queryKey: ['stations', filters, searchQuery],
     queryFn: () => fetchStationsFromApi(buildStationsQueryParams(filters, searchQuery)),
+    retry: 2,
   });
 
   useEffect(() => {
     setIsLoading(isStationsLoading);
   }, [isStationsLoading]);
+
+  useEffect(() => {
+    if (!isStationsError) return;
+    console.error('[stations]', stationsError);
+    toast.error(t('station.load_error'));
+  }, [isStationsError, stationsError, t]);
 
   const filteredStations = filterStations(apiStations, filters, searchQuery);
 

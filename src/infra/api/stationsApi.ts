@@ -6,7 +6,17 @@ import type {
   ChargingSpeed,
 } from '@/types/station';
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? '/_/backend';
+/** Absolute URL or same-origin path. Honors Vite BASE_URL so mini-app under a subpath still hits the API. */
+function resolveApiBaseUrl(): string {
+  const fromEnv = import.meta.env.VITE_API_BASE_URL?.trim();
+  if (fromEnv) return fromEnv.replace(/\/$/, '');
+  const appBase = (import.meta.env.BASE_URL || '/').replace(/\/$/, '');
+  const suffix = '/_/backend';
+  if (!appBase) return suffix;
+  return `${appBase}${suffix}`;
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 
 type BackendStationStatus = 'available' | 'busy' | 'offline' | 'unknown';
 

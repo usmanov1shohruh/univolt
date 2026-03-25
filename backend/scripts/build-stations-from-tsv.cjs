@@ -1,5 +1,5 @@
 /**
- * ETL: backend/data/parsed-stations.tsv → backend/data/stations.seed.json
+ * ETL: backend/data/parsed-stations.tsv → backend/src/stations/stations.seed.json
  * Dedupe by rounded lat/lon; normalize operator (network); map hours column → openingHours;
  * API availability status is always unknown (source data column is operational hours, not occupancy).
  */
@@ -9,7 +9,7 @@ const crypto = require('crypto');
 
 const ROOT = path.join(__dirname, '..');
 const INPUT = path.join(ROOT, 'data', 'parsed-stations.tsv');
-const OUTPUT = path.join(ROOT, 'data', 'stations.seed.json');
+const OUTPUT = path.join(ROOT, 'src', 'stations', 'stations.seed.json');
 
 function stableId(lat, lon, network) {
   const h = crypto

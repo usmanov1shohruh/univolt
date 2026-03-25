@@ -34,7 +34,9 @@ export interface StationFilters {
 }
 
 function loadSeedStations(): Station[] {
-  const seedPath = path.join(__dirname, '..', '..', 'data', 'stations.seed.json');
+  // File lives next to this module in src/ and is copied to dist/stations/ (see nest-cli assets).
+  // Avoid reading backend/data at runtime — that path is missing on Vercel/serverless bundles.
+  const seedPath = path.join(__dirname, 'stations.seed.json');
   const raw = fs.readFileSync(seedPath, 'utf8');
   return JSON.parse(raw) as Station[];
 }
