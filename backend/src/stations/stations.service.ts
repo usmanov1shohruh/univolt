@@ -31,6 +31,16 @@ export interface Station {
   portsCount: number | null;
   status: StationStatus;
   openingHours: string | null;
+  /**
+   * Optional metadata for stations coming from external providers (e.g. Tokbor).
+   */
+  source?: string;
+  sourceStationId?: string | null;
+  isDiscounted?: boolean;
+  hasTaxiDiscount?: boolean;
+  iconLeft?: boolean;
+  iconRight?: boolean;
+  iconBottom?: boolean | null;
 }
 
 export interface StationFilters {
@@ -162,6 +172,8 @@ export class StationsService implements OnModuleInit {
 
       const items: Station[] = rows.map((row) => ({
         id: row.id,
+        source: row.source,
+        sourceStationId: row.sourceStationId,
         name: row.name,
         address: row.address,
         latitude: row.latitude,
@@ -172,6 +184,11 @@ export class StationsService implements OnModuleInit {
         portsCount: row.portsCount,
         status: row.status as StationStatus,
         openingHours: row.openingHours,
+        isDiscounted: row.isDiscounted,
+        hasTaxiDiscount: row.hasTaxiDiscount,
+        iconLeft: row.iconLeft,
+        iconRight: row.iconRight,
+        iconBottom: row.iconBottom,
       }));
 
       return { items, total };
@@ -250,6 +267,8 @@ export class StationsService implements OnModuleInit {
       }
       return {
         id: row.id,
+        source: row.source,
+        sourceStationId: row.sourceStationId,
         name: row.name,
         address: row.address,
         latitude: row.latitude,
@@ -260,6 +279,11 @@ export class StationsService implements OnModuleInit {
         portsCount: row.portsCount,
         status: row.status as StationStatus,
         openingHours: row.openingHours,
+        isDiscounted: row.isDiscounted,
+        hasTaxiDiscount: row.hasTaxiDiscount,
+        iconLeft: row.iconLeft,
+        iconRight: row.iconRight,
+        iconBottom: row.iconBottom,
       };
     }
 
