@@ -1,5 +1,9 @@
 # Welcome to your Lovable project
 
+## UniVolt — Tashkent Explorer
+
+Полная справка по архитектуре, API, запуску и деплою: **[docs/UNIVOLT_REFERENCE.md](docs/UNIVOLT_REFERENCE.md)**.
+
 ## Project info
 
 **URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
@@ -109,7 +113,3 @@ Yes, you can!
 To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
 
 Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
-# univolt
-# univolt
-# univolt
-# univolt

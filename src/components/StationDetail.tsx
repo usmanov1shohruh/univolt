@@ -214,6 +214,24 @@ export default function StationDetail({ station, onBack }: Props) {
           </div>
         </div>
 
+        {/* Location */}
+        <Section label="Location">
+          <div className="text-[13px] text-foreground/80 space-y-1">
+            {station.district && (
+              <p>
+                <span className="text-foreground/55 text-[12px]">District: </span>
+                <span>{station.district}</span>
+              </p>
+            )}
+            <p>
+              <span className="text-foreground/55 text-[12px]">Coordinates: </span>
+              <span>
+                {station.latitude.toFixed(6)}, {station.longitude.toFixed(6)}
+              </span>
+            </p>
+          </div>
+        </Section>
+
         {/* Connectors */}
         <Section label={t('station.connectors')}>
           <div className="flex flex-wrap gap-1.5">
@@ -264,6 +282,26 @@ export default function StationDetail({ station, onBack }: Props) {
             <p className="text-[13px] text-foreground/78 leading-relaxed">{station.good_to_know}</p>
           </Section>
         )}
+
+        {/* Technical meta */}
+        <Section label="Details">
+          <div className="text-[11px] text-foreground/70 space-y-1.5">
+            <p>
+              <span className="text-foreground/50">Data source: </span>
+              <span>{station.source_type}</span>
+            </p>
+            <p>
+              <span className="text-foreground/50">Confidence: </span>
+              <span>{Math.round(station.confidence_level * 100)}%</span>
+            </p>
+            {station.route_url && (
+              <p className="truncate">
+                <span className="text-foreground/50">Route URL: </span>
+                <span className="break-all">{station.route_url}</span>
+              </p>
+            )}
+          </div>
+        </Section>
 
         {/* Disclaimer + meta */}
         <div className="space-y-2 pt-2">

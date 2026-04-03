@@ -1,6 +1,9 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { MapContainer, Marker, Popup, useMap } from 'react-leaflet';
+import MarkerClusterGroup from '@changey/react-leaflet-markercluster';
 import L from 'leaflet';
+import 'leaflet.markercluster';
+import 'leaflet.markercluster/dist/MarkerCluster.css';
 import { Station } from '@/types/station';
 import { useApp } from '@/context/AppContext';
 import type { MapBBox } from '@/infra/api/stationsApi';
@@ -31,7 +34,7 @@ function createIcon(
   const size = isSelected ? 32 : 24;
   const border = isSelected ? foreground : color;
   const logoHtml = logoUrl
-    ? `<img src="${logoUrl}" alt="" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;transform:scale(1.18);transform-origin:center;" />`
+    ? `<img src="${logoUrl}" alt="" decoding="async" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block;transform:scale(1.14) translateZ(0);transform-origin:center;will-change:transform;" />`
     : '';
   const fallbackSvg = `<svg width="${size * 0.42}" height="${size * 0.42}" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
         <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
@@ -46,9 +49,10 @@ function createIcon(
       border-radius:50%;
       overflow:hidden;
       line-height:0;
-      box-shadow:0 2px 8px ${color}40${isSelected ? ',0 0 0 4px ' + color + '30' : ''};
+      box-shadow:${isSelected ? `0 0 0 4px ${color}30` : 'none'};
       display:flex;align-items:center;justify-content:center;
-      transition:all 0.2s cubic-bezier(0.16,1,0.3,1);
+      will-change:transform;
+      transform:translateZ(0);
     ">
       ${
         logoHtml
@@ -58,6 +62,17 @@ function createIcon(
     </div>`,
     iconSize: [size, size],
     iconAnchor: [size / 2, size / 2],
+  });
+}
+
+/** Count badge for grouped markers at low zoom (Leaflet calls this outside React). */
+function createStationClusterIcon(cluster: L.MarkerCluster) {
+  const n = cluster.getChildCount();
+  return L.divIcon({
+    html: `<div class="station-map-cluster-inner"><span>${n}</span></div>`,
+    className: 'station-map-cluster-root',
+    iconSize: [40, 40],
+    iconAnchor: [20, 20],
   });
 }
 
@@ -207,61 +222,69 @@ export default function StationMap({ stations, onStationSelect, resizeSignal }: 
       <MapUpdater selectedStation={selectedStation} />
       <MapSizeController resizeSignal={resizeSignal} />
       <MapBoundsReporter setMapBbox={setMapBbox} />
-      {stations.map(station => {
-        const logoUrl = getOperatorLogoUrl(station.operator);
-        const logoLetter = getOperatorLogoLetter(station.operator);
-        return (
-          <Marker
-            key={station.id}
-            position={[station.latitude, station.longitude]}
-            icon={createIcon(
-              selectedStation?.id === station.id,
-              station.availability_status,
-              markerColors,
-              markerColors.foreground,
-              logoUrl,
-            )}
-            eventHandlers={{ click: () => onStationSelect(station) }}
-          >
-            <Popup>
-              <div className="font-body min-w-[180px]">
-                <p className="font-display font-semibold text-[13px] text-foreground leading-tight">{station.name}</p>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="shrink-0 inline-flex w-5 h-5 rounded-full bg-muted/40 border border-border/50 overflow-hidden items-center justify-center">
-                    {logoUrl ? (
-                      <img
-                        src={logoUrl}
-                        alt=""
-                        width={18}
-                        height={18}
-                        className="w-[18px] h-[18px] object-cover rounded-full block"
-                        style={{ transform: 'scale(1.18)', transformOrigin: 'center' }}
-                        loading="eager"
-                      />
-                    ) : (
-                      <span className="text-[10px] font-bold text-muted-foreground">{logoLetter}</span>
-                    )}
-                  </span>
-                  <p className="text-[11px] text-muted-foreground truncate">{station.operator}</p>
+      <MarkerClusterGroup
+        chunkedLoading
+        showCoverageOnHover={false}
+        maxClusterRadius={56}
+        spiderfyOnMaxZoom
+        iconCreateFunction={createStationClusterIcon}
+      >
+        {stations.map(station => {
+          const logoUrl = getOperatorLogoUrl(station.operator);
+          const logoLetter = getOperatorLogoLetter(station.operator);
+          return (
+            <Marker
+              key={station.id}
+              position={[station.latitude, station.longitude]}
+              icon={createIcon(
+                selectedStation?.id === station.id,
+                station.availability_status,
+                markerColors,
+                markerColors.foreground,
+                logoUrl,
+              )}
+              eventHandlers={{ click: () => onStationSelect(station) }}
+            >
+              <Popup>
+                <div className="font-body min-w-[180px]">
+                  <p className="font-display font-semibold text-[13px] text-foreground leading-tight">{station.name}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="shrink-0 inline-flex w-5 h-5 rounded-full bg-muted/40 border border-border/50 overflow-hidden items-center justify-center">
+                      {logoUrl ? (
+                        <img
+                          src={logoUrl}
+                          alt=""
+                          width={18}
+                          height={18}
+                          className="w-[18px] h-[18px] object-cover rounded-full block"
+                          style={{ transform: 'scale(1.14) translateZ(0)', transformOrigin: 'center', willChange: 'transform' }}
+                          loading="eager"
+                        />
+                      ) : (
+                        <span className="text-[10px] font-bold text-muted-foreground">{logoLetter}</span>
+                      )}
+                    </span>
+                    <p className="text-[11px] text-muted-foreground truncate">{station.operator}</p>
+                  </div>
+                  <div className="flex items-center gap-2 mt-1.5 text-[11px] text-muted-foreground">
+                    <span>
+                      {station.max_power_kw == null
+                        ? t('station.power_unknown')
+                        : `${station.max_power_kw} ${t('station.kw')}`}
+                    </span>
+                    <span className="text-border">·</span>
+                    <span>
+                      {station.ports_count == null
+                        ? t('station.ports_unknown')
+                        : `${station.ports_count} ${t('station.ports')}`}
+                    </span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2 mt-1.5 text-[11px] text-muted-foreground">
-                  <span>
-                    {station.max_power_kw == null
-                      ? t('station.power_unknown')
-                      : `${station.max_power_kw} ${t('station.kw')}`}
-                  </span>
-                  <span className="text-border">·</span>
-                  <span>
-                    {station.ports_count == null
-                      ? t('station.ports_unknown')
-                      : `${station.ports_count} ${t('station.ports')}`}
-                  </span>
-                </div>
-              </div>
-            </Popup>
-          </Marker>
-        );
-      })}
+              </Popup>
+            </Marker>
+          );
+        })}
+      </MarkerClusterGroup>
     </MapContainer>
   );
 }

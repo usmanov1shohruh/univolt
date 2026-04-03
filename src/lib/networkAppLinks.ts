@@ -86,9 +86,19 @@ const NETWORK_APP_LINKS: Record<string, NetworkAppLink> = {
     androidUrl: "https://play.google.com/store/apps/details?id=u.energy.client_mobile&hl=uz&gl=UZ",
   },
 
+  // K Watt (Android)
+  "K Watt": {
+    androidUrl: "https://play.google.com/store/apps/details?id=org.uicgroup.kwattapp&hl=uz&gl=UZ",
+  },
+
   // Q-watt (Android)
   "Q-watt": {
     androidUrl: "https://play.google.com/store/apps/details?id=com.q.watt&hl=uz&gl=UZ",
+  },
+
+  // ZTY (Android)
+  ZTY: {
+    androidUrl: "https://play.google.com/store/apps/details?id=org.uicgroup.ztymobile&hl=uz&gl=UZ",
   },
 };
 

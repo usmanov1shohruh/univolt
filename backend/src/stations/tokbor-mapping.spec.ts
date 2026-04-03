@@ -44,5 +44,5 @@ describe('Tokbor mapping helpers', () => {
     expect(mapped.iconRight).toBe(false);
     expect(mapped.iconBottom).toBeNull();
   });
-}
+});
 
