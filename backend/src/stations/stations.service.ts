@@ -17,7 +17,12 @@ export type ConnectorType = 'CCS2' | 'CHAdeMO' | 'Type2' | 'GB/T' | 'Other';
  * Parsed catalog rows do not contain this signal — imported stations use `unknown`.
  * The source TSV "status" column is operational hours and is mapped to `openingHours`, not here.
  */
-export type StationStatus = 'available' | 'busy' | 'offline' | 'unknown';
+export type StationStatus =
+  | 'available'
+  | 'busy'
+  | 'offline'
+  | 'unknown'
+  | 'maintenance';
 
 export interface Station {
   id: string;

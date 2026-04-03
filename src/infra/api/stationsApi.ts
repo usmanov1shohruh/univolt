@@ -46,7 +46,14 @@ async function fetchBackendStationsJson(url: string): Promise<BackendStationsPag
 export const BackendConnectorTypeSchema = z.enum(['CCS2', 'CHAdeMO', 'Type2', 'GB/T', 'Other']);
 export type BackendConnectorType = z.infer<typeof BackendConnectorTypeSchema>;
 
-export const BackendStationStatusSchema = z.enum(['available', 'busy', 'offline', 'unknown']);
+/** Matches seed/API; Tokbor uses `maintenance` for out-of-service points. */
+export const BackendStationStatusSchema = z.enum([
+  'available',
+  'busy',
+  'offline',
+  'unknown',
+  'maintenance',
+]);
 export type BackendStationStatus = z.infer<typeof BackendStationStatusSchema>;
 
 export const BackendStationSchema = z.object({
@@ -107,6 +114,8 @@ function mapBackendStatusToAvailability(status: BackendStationStatus): Availabil
       return 'busy';
     case 'offline':
       return 'unknown';
+    case 'maintenance':
+      return 'limited';
     case 'unknown':
     default:
       return 'unknown';

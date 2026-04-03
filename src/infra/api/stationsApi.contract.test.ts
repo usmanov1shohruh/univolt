@@ -51,5 +51,14 @@ describe('stationsApi contract', () => {
     const front = mapBackendToFront(backendStation);
     expect(front.availability_status).toBe('unknown');
   });
+
+  it('accepts maintenance from seed/Tokbor and maps to limited', () => {
+    const backendStation = BackendStationSchema.parse({
+      ...baseBackendStation,
+      status: 'maintenance',
+    });
+    const front = mapBackendToFront(backendStation);
+    expect(front.availability_status).toBe('limited');
+  });
 });
 

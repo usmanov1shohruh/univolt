@@ -14,6 +14,7 @@ const stationStatusValues: readonly StationStatus[] = [
   'busy',
   'offline',
   'unknown',
+  'maintenance',
 ];
 
 export class GetStationsQueryDto {
