@@ -9,6 +9,7 @@ import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/lib/i18n';
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { MapBasemapLayer } from '@/components/map/MapBasemapLayer';
+import { UserLocationOnMap } from '@/components/map/UserLocationOnMap';
 import { getOperatorLogoLetter, getOperatorLogoUrl } from '@/lib/operatorLogos';
 
 function readCssHslTriplet(varName: string): string {
@@ -165,6 +166,7 @@ export default function StationMap({ stations, onStationSelect, resizeSignal }: 
       <MapBasemapLayer mapTheme={effectiveTheme} />
       <MapUpdater selectedStation={selectedStation} />
       <MapSizeController resizeSignal={resizeSignal} />
+      <UserLocationOnMap />
       <MarkerClusterGroup
         chunkedLoading
         showCoverageOnHover={false}
