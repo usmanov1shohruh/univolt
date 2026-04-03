@@ -6,7 +6,7 @@ import { loadOnboardingSeen, saveOnboardingSeen } from "@/infra/storage/onboardi
 import { loadHasSelectedLanguage, saveLanguageSelected } from "@/infra/storage/languageFlagsStorage";
 import { useQuery } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { buildStationsQueryParams, fetchStationsFromApi, type MapBBox } from '@/infra/api/stationsApi';
+import { buildStationsQueryParams, fetchStationsFromApi } from '@/infra/api/stationsApi';
 import { useI18n } from '@/lib/i18n';
 
 interface AppState {
@@ -16,7 +16,6 @@ interface AppState {
   favorites: string[];
   filters: Filters;
   searchQuery: string;
-  mapBbox: MapBBox | null;
   stationsTotal: number;
   hasSeenOnboarding: boolean;
   hasSelectedLanguage: boolean;
@@ -25,7 +24,6 @@ interface AppState {
   toggleFavorite: (id: string) => void;
   setFilters: (f: Filters) => void;
   setSearchQuery: (q: string) => void;
-  setMapBbox: (bbox: MapBBox | null) => void;
   completeOnboarding: () => void;
   completeLanguageSelection: () => void;
   activeFiltersCount: number;
@@ -45,7 +43,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [favorites, setFavorites] = useState<string[]>(() => loadFavorites());
   const [filters, setFilters] = useState<Filters>(defaultFilters);
   const [searchQuery, setSearchQuery] = useState('');
-  const [mapBbox, setMapBbox] = useState<MapBBox | null>(null);
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(() => loadOnboardingSeen());
   const [hasSelectedLanguage, setHasSelectedLanguage] = useState(() => loadHasSelectedLanguage());
   const [isLoading, setIsLoading] = useState(true);
@@ -70,8 +67,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   // - `filters` are applied locally for the final result set
   const localFilters = filters;
   const remoteQueryParams = useMemo(
-    () => buildStationsQueryParams(localFilters, searchQuery, mapBbox),
-    [localFilters, searchQuery, mapBbox],
+    () => buildStationsQueryParams(localFilters, searchQuery),
+    [localFilters, searchQuery],
   );
 
   const {
@@ -108,7 +105,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       favorites,
       filters,
       searchQuery,
-      mapBbox,
       stationsTotal,
       hasSeenOnboarding,
       hasSelectedLanguage,
@@ -117,7 +113,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       toggleFavorite,
       setFilters,
       setSearchQuery,
-      setMapBbox,
       completeOnboarding,
       completeLanguageSelection,
       activeFiltersCount: countActiveFilters(filters),

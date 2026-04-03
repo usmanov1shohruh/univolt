@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo } from 'react';
 import { MapContainer, Marker, Popup, useMap } from 'react-leaflet';
 import MarkerClusterGroup from '@changey/react-leaflet-markercluster';
 import L from 'leaflet';
@@ -6,7 +6,6 @@ import 'leaflet.markercluster';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import { Station } from '@/types/station';
 import { useApp } from '@/context/AppContext';
-import type { MapBBox } from '@/infra/api/stationsApi';
 import { useI18n } from '@/lib/i18n';
 import { useAppTheme } from '@/theme/ThemeProvider';
 import { MapBasemapLayer } from '@/components/map/MapBasemapLayer';
@@ -139,64 +138,8 @@ function MapSizeController({ resizeSignal }: { resizeSignal?: string }) {
   return null;
 }
 
-function MapBoundsReporter({
-  setMapBbox,
-  debounceMs,
-}: {
-  setMapBbox: (bbox: MapBBox | null) => void;
-  debounceMs?: number;
-}) {
-  const map = useMap();
-  const lastBboxRef = useRef<MapBBox | null>(null);
-
-  useEffect(() => {
-    let timeoutId: number | null = null;
-
-    const pushBbox = () => {
-      const bounds = map.getBounds();
-      const round = (n: number) => Math.round(n * 1e4) / 1e4;
-      const next: MapBBox = {
-        minLat: round(bounds.getSouth()),
-        minLon: round(bounds.getWest()),
-        maxLat: round(bounds.getNorth()),
-        maxLon: round(bounds.getEast()),
-      };
-
-      const last = lastBboxRef.current;
-      const isSame =
-        last &&
-        last.minLat === next.minLat &&
-        last.minLon === next.minLon &&
-        last.maxLat === next.maxLat &&
-        last.maxLon === next.maxLon;
-
-      if (!isSame) {
-        lastBboxRef.current = next;
-        setMapBbox(next);
-      }
-    };
-
-    const schedule = () => {
-      if (timeoutId) window.clearTimeout(timeoutId);
-      timeoutId = window.setTimeout(pushBbox, debounceMs ?? 250);
-    };
-
-    map.on('moveend', schedule);
-    map.on('zoomend', schedule);
-    schedule(); // initial bbox
-
-    return () => {
-      map.off('moveend', schedule);
-      map.off('zoomend', schedule);
-      if (timeoutId) window.clearTimeout(timeoutId);
-    };
-  }, [map, setMapBbox, debounceMs]);
-
-  return null;
-}
-
 export default function StationMap({ stations, onStationSelect, resizeSignal }: Props) {
-  const { selectedStation, setMapBbox } = useApp();
+  const { selectedStation } = useApp();
   const { t } = useI18n();
   const { effectiveTheme } = useAppTheme();
 
@@ -222,7 +165,6 @@ export default function StationMap({ stations, onStationSelect, resizeSignal }: 
       <MapBasemapLayer mapTheme={effectiveTheme} />
       <MapUpdater selectedStation={selectedStation} />
       <MapSizeController resizeSignal={resizeSignal} />
-      <MapBoundsReporter setMapBbox={setMapBbox} />
       <MarkerClusterGroup
         chunkedLoading
         showCoverageOnHover={false}

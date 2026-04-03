@@ -169,7 +169,6 @@ export function mapBackendToFront(station: BackendStation): Station {
 export function buildStationsQueryParams(
   filters: Filters,
   searchQuery: string,
-  bbox?: MapBBox | null,
 ): StationsQueryParams {
   const params: StationsQueryParams = {};
 
@@ -189,12 +188,8 @@ export function buildStationsQueryParams(
     params.network = filters.operators[0];
   }
 
-  if (bbox) {
-    params.minLat = bbox.minLat;
-    params.minLon = bbox.minLon;
-    params.maxLat = bbox.maxLat;
-    params.maxLon = bbox.maxLon;
-  }
+  // Intentionally no map bbox: in Telegram/WebView the first bounds can be wrong
+  // before layout/size settle, which made the API return zero stations.
 
   return params;
 }
