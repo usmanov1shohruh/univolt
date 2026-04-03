@@ -1,20 +1,25 @@
+import { Fragment, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Heart, Share2, Navigation, Clock, Info, Coffee, Car, Bath, Shield, ShoppingBag, Hotel, Wifi, Users, Zap, ExternalLink } from 'lucide-react';
-import { Station, Amenity } from '@/types/station';
-import { ConnectorBadge, PowerBadge } from './StationCard';
+import {
+  ArrowLeft,
+  Heart,
+  Navigation,
+  ExternalLink,
+  Zap,
+  Plug,
+  MapPin,
+  CalendarClock,
+} from 'lucide-react';
+import { Station } from '@/types/station';
 import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/lib/i18n';
 import { getNetworkAppUrl } from '@/lib/networkAppLinks';
-import { getOperatorLogoLetter, getOperatorLogoUrl } from '@/lib/operatorLogos';
 import { toast } from 'sonner';
-import { useState } from 'react';
 import WebApp from '@twa-dev/sdk';
 import { isTelegramMiniApp } from '@/telegram/webApp';
-
-const amenityIcons: Record<Amenity, React.ElementType> = {
-  cafe: Coffee, parking: Car, restroom: Bath, security: Shield,
-  shopping: ShoppingBag, hotel: Hotel, wifi: Wifi, waiting_area: Users,
-};
+import { distanceKm } from '@/lib/distance';
+import { ConnectorTypeIcon, sortConnectorTypesForDisplay } from '@/components/connectors/ConnectorTypeIcon';
+import type { AvailabilityStatus } from '@/types/station';
 
 interface Props {
   station: Station;
@@ -23,7 +28,6 @@ interface Props {
 
 type MapProvider = 'waze' | '2gis' | 'yandex' | 'google';
 
-/** Order shown in the picker (Yandex / 2GIS first for this region). */
 const ROUTE_PROVIDERS_ORDER: MapProvider[] = ['waze', 'yandex', '2gis', 'google'];
 
 const mapProviderMeta: Record<MapProvider, { label: string; icon: string; iconClassName: string }> = {
@@ -83,26 +87,62 @@ function openExternalLink(url: string): void {
   window.location.assign(url);
 }
 
+function splitPricingLines(raw: string | undefined): { main: string; sub?: string } | null {
+  const t = raw?.trim();
+  if (!t) return null;
+  const lines = t.split(/\n/).map((l) => l.trim()).filter(Boolean);
+  if (lines.length >= 2) return { main: lines[0], sub: lines[1] };
+  return { main: lines[0] };
+}
+
+const statusPillClass: Record<AvailabilityStatus, string> = {
+  available:
+    'bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 ring-1 ring-emerald-500/25',
+  busy: 'bg-rose-500/15 text-rose-800 dark:text-rose-300 ring-1 ring-rose-500/25',
+  limited: 'bg-amber-500/15 text-amber-900 dark:text-amber-200 ring-1 ring-amber-500/25',
+  unknown: 'bg-muted text-muted-foreground ring-1 ring-border/60',
+};
+
 export default function StationDetail({ station, onBack }: Props) {
-  const { favorites, toggleFavorite } = useApp();
-  const { t } = useI18n();
+  const { favorites, toggleFavorite, userGeolocation } = useApp();
+  const { t, locale } = useI18n();
   const isFav = favorites.includes(station.id);
-  const logoUrl = getOperatorLogoUrl(station.operator);
-  const logoLetter = getOperatorLogoLetter(station.operator);
   const [isRoutePickerOpen, setIsRoutePickerOpen] = useState(false);
   const networkAppUrl = getNetworkAppUrl(station.operator, WebApp.platform);
+
+  const distanceKmValue = useMemo(() => {
+    if (!userGeolocation) return null;
+    return distanceKm(
+      userGeolocation.latitude,
+      userGeolocation.longitude,
+      station.latitude,
+      station.longitude,
+    );
+  }, [userGeolocation, station.latitude, station.longitude]);
+
+  const distanceLabel = useMemo(() => {
+    if (distanceKmValue == null) return null;
+    const locTag = locale === 'en' ? 'en-US' : locale === 'uz' ? 'uz-UZ' : 'ru-RU';
+    const frac = distanceKmValue < 10 ? 2 : 1;
+    const km = distanceKmValue.toLocaleString(locTag, {
+      minimumFractionDigits: frac,
+      maximumFractionDigits: frac,
+    });
+    return t('station.detail.distance_km', { km });
+  }, [distanceKmValue, locale, t]);
+
+  const addressLine = [station.address, station.district].map((s) => s?.trim()).find(Boolean) ?? '';
+
+  const pricingBlock = splitPricingLines(station.pricing_info ?? station.payment_info_text);
+
+  const orderedConnectors = useMemo(
+    () => sortConnectorTypesForDisplay(station.connector_types),
+    [station.connector_types],
+  );
 
   const handleSave = () => {
     toggleFavorite(station.id);
     toast(isFav ? t('station.removed') : t('station.saved'), { duration: 2000 });
-  };
-
-  const handleShare = async () => {
-    try {
-      await navigator.share?.({ title: station.name, text: station.address, url: window.location.href });
-    } catch {
-      toast(t('station.link_copied'), { duration: 1500 });
-    }
   };
 
   const handleRouteSelect = (provider: MapProvider) => {
@@ -118,20 +158,6 @@ export default function StationDetail({ station, onBack }: Props) {
     openExternalLink(networkAppUrl);
   };
 
-  const statusColors: Record<string, string> = {
-    available: 'text-status-available',
-    busy: 'text-status-busy',
-    unknown: 'text-status-unknown',
-    limited: 'text-status-limited',
-  };
-
-  const statusBg: Record<string, string> = {
-    available: 'bg-status-available',
-    busy: 'bg-status-busy',
-    unknown: 'bg-status-unknown',
-    limited: 'bg-status-limited',
-  };
-
   return (
     <motion.div
       initial={{ x: '100%' }}
@@ -140,213 +166,125 @@ export default function StationDetail({ station, onBack }: Props) {
       transition={{ type: 'spring', damping: 32, stiffness: 300 }}
       className="fixed inset-0 bg-background text-foreground z-[980] overflow-y-auto lg:relative lg:inset-auto"
     >
-      {/* Sticky header */}
       <div className="sticky top-0 z-[981] surface-glass border-b border-border/50 px-4 py-3 tma-top-offset flex items-center gap-3">
-        <button type="button" onClick={onBack} className="p-2 -ml-2 rounded-lg hover:bg-muted transition-colors text-foreground">
+        <button
+          type="button"
+          onClick={onBack}
+          className="p-2 -ml-2 rounded-lg hover:bg-muted transition-colors text-foreground"
+          aria-label={t('common.back')}
+        >
           <ArrowLeft className="w-4 h-4" />
         </button>
-        <div className="flex-1 min-w-0">
-          <h1 className="font-display font-semibold text-[15px] truncate leading-tight text-foreground">{station.name}</h1>
-        </div>
+        <div className="flex-1" />
         <button type="button" onClick={handleSave} className="p-2 -mr-2 rounded-lg hover:bg-muted transition-colors">
           <Heart className={`w-4 h-4 ${isFav ? 'fill-primary text-primary' : 'text-foreground/55'}`} />
         </button>
       </div>
 
-      <div className="px-5 py-5 space-y-5 pb-32">
-        {/* Hero block */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-full ${statusBg[station.availability_status]}`} />
-            <span className={`text-[13px] font-medium ${statusColors[station.availability_status]}`}>
-              {t(`status.${station.availability_status}`)}
-            </span>
-            <span className="text-border text-[11px]">·</span>
-            <span className="inline-flex items-center gap-2 min-w-0">
-              {logoUrl ? (
-                <img
-                  src={logoUrl}
-                  alt=""
-                  width={18}
-                  height={18}
-                  className="w-[18px] h-[18px] object-cover rounded-full block shrink-0"
-                  loading="eager"
-                />
-              ) : (
-                <span className="w-5 h-5 rounded-[6px] bg-muted/60 inline-flex items-center justify-center text-[10px] font-bold text-muted-foreground shrink-0">
-                  {logoLetter}
+      <div className="px-5 pt-4 pb-40 space-y-5">
+        <div className="flex gap-3 justify-between items-start">
+          <div className="min-w-0 flex-1">
+            <h1 className="font-display font-bold text-[20px] leading-tight text-foreground">{station.name}</h1>
+            {addressLine ? (
+              <p className="text-[14px] text-muted-foreground mt-2 leading-snug">{addressLine}</p>
+            ) : null}
+          </div>
+          {distanceLabel ? (
+            <div className="shrink-0 inline-flex items-center gap-1 rounded-xl bg-muted/90 px-2.5 py-1.5 text-[12px] font-medium text-foreground/85 border border-border/50">
+              <MapPin className="w-3.5 h-3.5 opacity-70" />
+              {distanceLabel}
+            </div>
+          ) : null}
+        </div>
+
+        <div
+          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1.5 text-[12px] font-semibold ${statusPillClass[station.availability_status]}`}
+        >
+          <Zap className="w-3.5 h-3.5 shrink-0" />
+          {t(`status.${station.availability_status}`)}
+        </div>
+
+        <div className="flex gap-3 items-start">
+          <Zap className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" strokeWidth={2} />
+          <p className="text-[15px] leading-snug text-foreground">
+            {station.max_power_kw != null ? (
+              <>
+                <span className="font-semibold">
+                  {station.max_power_kw} {t('station.kw')}
                 </span>
-              )}
-              <span className="text-[11px] text-foreground/70 truncate">{station.operator}</span>
-            </span>
-          </div>
-          <p className="text-[13px] text-foreground/80 leading-relaxed">{station.address}</p>
-        </div>
-
-        {/* Quick info row */}
-        <div className="flex gap-2">
-          <div className="flex-1 bg-card rounded-lg p-3 border border-border/50">
-            <div className="flex items-center gap-1.5 text-primary mb-1">
-              <Zap className="w-3.5 h-3.5" />
-              <span className="font-display font-semibold text-sm">
-                {station.max_power_kw == null ? t('station.power_unknown') : station.max_power_kw}
-              </span>
-              {station.max_power_kw != null && (
-                <span className="text-[11px] text-foreground/70">{t('station.kw')}</span>
-              )}
-            </div>
-            <p className="text-[10px] text-foreground/70">{t(`speed.${station.charging_speed_category}`)}</p>
-          </div>
-          <div className="flex-1 bg-card rounded-lg p-3 border border-border/50">
-            <div className="flex items-center gap-1.5 text-foreground mb-1">
-              <Clock className="w-3.5 h-3.5 text-foreground/65" />
-              <span className="font-display font-semibold text-sm">
-                {station.is_24_7 ? '24/7' : station.hours || t('station.check_on_site')}
-              </span>
-            </div>
-            <p className="text-[10px] text-foreground/70">{t('station.hours')}</p>
-          </div>
-          <div className="flex-1 bg-card rounded-lg p-3 border border-border/50">
-            <div className="font-display font-semibold text-sm text-foreground mb-1">
-              {station.ports_count == null ? t('station.ports_unknown') : station.ports_count}
-            </div>
-            <p className="text-[10px] text-foreground/70">{t('station.ports')}</p>
-          </div>
-        </div>
-
-        {/* Location */}
-        <Section label="Location">
-          <div className="text-[13px] text-foreground/80 space-y-1">
-            {station.district && (
-              <p>
-                <span className="text-foreground/55 text-[12px]">District: </span>
-                <span>{station.district}</span>
-              </p>
-            )}
-            <p>
-              <span className="text-foreground/55 text-[12px]">Coordinates: </span>
-              <span>
-                {station.latitude.toFixed(6)}, {station.longitude.toFixed(6)}
-              </span>
-            </p>
-          </div>
-        </Section>
-
-        {/* Connectors */}
-        <Section label={t('station.connectors')}>
-          <div className="flex flex-wrap gap-1.5">
-            {station.connector_types.map(ct => <ConnectorBadge key={ct} type={ct} />)}
-            <PowerBadge kw={station.max_power_kw} />
-          </div>
-        </Section>
-
-        {/* Pricing */}
-        <Section label={t('station.pricing')}>
-          <p className="text-[13px] text-foreground/90">{station.pricing_info || station.payment_info_text || t('station.check_on_site')}</p>
-        </Section>
-
-        {/* Access */}
-        {station.access_notes && (
-          <Section label={t('station.access')}>
-            <p className="text-[13px] text-foreground/78 leading-relaxed">{station.access_notes}</p>
-          </Section>
-        )}
-
-        {/* Amenities */}
-        {station.amenities.length > 0 && (
-          <Section label={t('station.amenities')}>
-            <div className="flex flex-wrap gap-1.5">
-              {station.amenities.map(a => {
-                const Icon = amenityIcons[a];
-                return (
-                  <span key={a} className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted text-[11px] text-foreground/75">
-                    <Icon className="w-3 h-3" />
-                    {t(`amenity.${a}`)}
+                {station.charging_speed_category !== 'unknown' ? (
+                  <span className="text-muted-foreground font-normal">
+                    {' '}
+                    — {t(`speed.${station.charging_speed_category}`)}
                   </span>
-                );
-              })}
-            </div>
-          </Section>
-        )}
-
-        {/* How to find */}
-        {station.how_to_find && (
-          <Section label={t('station.how_to_find')}>
-            <p className="text-[13px] text-foreground/78 leading-relaxed">{station.how_to_find}</p>
-          </Section>
-        )}
-
-        {/* Good to know */}
-        {station.good_to_know && (
-          <Section label={t('station.good_to_know')}>
-            <p className="text-[13px] text-foreground/78 leading-relaxed">{station.good_to_know}</p>
-          </Section>
-        )}
-
-        {/* Technical meta */}
-        <Section label="Details">
-          <div className="text-[11px] text-foreground/70 space-y-1.5">
-            <p>
-              <span className="text-foreground/50">Data source: </span>
-              <span>{station.source_type}</span>
-            </p>
-            <p>
-              <span className="text-foreground/50">Confidence: </span>
-              <span>{Math.round(station.confidence_level * 100)}%</span>
-            </p>
-            {station.route_url && (
-              <p className="truncate">
-                <span className="text-foreground/50">Route URL: </span>
-                <span className="break-all">{station.route_url}</span>
-              </p>
+                ) : null}
+              </>
+            ) : (
+              <span className="text-muted-foreground">{t('station.power_unknown')}</span>
             )}
-          </div>
-        </Section>
-
-        {/* Disclaimer + meta */}
-        <div className="space-y-2 pt-2">
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-muted/50">
-            <Info className="w-3.5 h-3.5 text-foreground/45 shrink-0 mt-0.5" />
-            <p className="text-[11px] text-foreground/55 leading-relaxed">{t('disclaimer.info')}</p>
-          </div>
-          <div className="text-[10px] text-foreground/45 space-y-0.5">
-            <p>{station.last_updated_text}</p>
-            {!station.is_verified && <p>⚠ {t('station.not_verified')}</p>}
-          </div>
+          </p>
         </div>
+
+        {station.ports_count != null ? (
+          <div className="flex gap-3 items-start">
+            <Plug className="w-5 h-5 text-muted-foreground shrink-0 mt-0.5" strokeWidth={2} />
+            <p className="text-[15px] text-foreground">
+              {t('station.detail.ports_n', { n: station.ports_count })}
+            </p>
+          </div>
+        ) : null}
+
+        {orderedConnectors.length > 0 ? (
+          <div className="flex flex-wrap items-center gap-y-2">
+            {orderedConnectors.map((ct, i) => (
+              <Fragment key={ct}>
+                {i > 0 ? <span className="text-muted-foreground/35 px-1.5 select-none">·</span> : null}
+                <ConnectorTypeIcon type={ct} />
+              </Fragment>
+            ))}
+          </div>
+        ) : null}
+
+        {pricingBlock ? (
+          <div className="pt-1">
+            <p className="text-[26px] font-bold font-display tracking-tight text-foreground leading-none">
+              {pricingBlock.main}
+            </p>
+            {pricingBlock.sub ? (
+              <p className="text-[14px] text-muted-foreground mt-2">{pricingBlock.sub}</p>
+            ) : null}
+          </div>
+        ) : null}
       </div>
 
-      {/* Sticky CTAs */}
-      <div className="fixed bottom-0 left-0 right-0 surface-glass border-t border-border/50 px-5 py-4 flex gap-2.5 safe-bottom z-[981] lg:relative lg:border-0">
+      <div className="fixed bottom-0 left-0 right-0 surface-glass border-t border-border/50 px-4 py-3.5 flex gap-2.5 safe-bottom z-[981] lg:relative lg:border-0 lg:px-5">
         <button
           type="button"
           onClick={() => setIsRoutePickerOpen(true)}
-          className="flex-1 py-3 rounded-xl bg-primary text-primary-foreground font-display font-semibold text-[14px] flex items-center justify-center gap-2 transition-all hover:opacity-90 active:scale-[0.98]"
+          className="flex-1 min-w-0 py-3.5 rounded-xl bg-foreground text-background font-display font-semibold text-[15px] flex items-center justify-center gap-2 transition-all hover:opacity-92 active:scale-[0.99]"
         >
-          <Navigation className="w-4 h-4" />
+          <Navigation className="w-4 h-4 shrink-0" />
           {t('station.route')}
         </button>
-        {networkAppUrl && (
+        {networkAppUrl ? (
           <button
             type="button"
             onClick={handleOpenNetworkApp}
-            className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center transition-colors hover:bg-surface-elevated"
-            aria-label={t('station.open_network_app')}
-            title={t('station.open_network_app')}
+            className="flex-1 min-w-0 py-3.5 rounded-xl bg-primary text-primary-foreground font-display font-semibold text-[15px] flex items-center justify-center gap-2 transition-all hover:opacity-92 active:scale-[0.99]"
           >
-            <ExternalLink className="w-4 h-4 text-foreground/55" />
+            <CalendarClock className="w-4 h-4 shrink-0" />
+            {t('station.detail.operator_cta')}
           </button>
-        )}
-        <button type="button" onClick={handleShare} className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center transition-colors hover:bg-surface-elevated">
-          <Share2 className="w-4 h-4 text-foreground/55" />
-        </button>
-        <button type="button" onClick={handleSave} className="w-11 h-11 rounded-xl bg-muted flex items-center justify-center transition-colors hover:bg-surface-elevated">
-          <Heart className={`w-4 h-4 ${isFav ? 'fill-primary text-primary' : 'text-foreground/55'}`} />
-        </button>
+        ) : null}
       </div>
 
       {isRoutePickerOpen && (
-        <div className="fixed inset-0 z-[1100] flex flex-col justify-end pointer-events-auto" role="dialog" aria-modal="true" aria-labelledby="route-picker-title">
+        <div
+          className="fixed inset-0 z-[1100] flex flex-col justify-end pointer-events-auto"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="route-picker-title"
+        >
           <button
             type="button"
             className="absolute inset-0 bg-black/60 border-0 cursor-default"
@@ -370,7 +308,9 @@ export default function StationDetail({ station, onBack }: Props) {
                     className="w-full rounded-xl border border-border bg-background/40 px-4 py-3 text-left text-sm font-medium text-card-foreground flex items-center justify-between active:scale-[0.99] transition-transform"
                   >
                     <span className="flex items-center gap-3 min-w-0">
-                      <span className={`shrink-0 inline-flex h-6 w-6 items-center justify-center rounded-md text-xs font-bold ${meta.iconClassName}`}>
+                      <span
+                        className={`shrink-0 inline-flex h-6 w-6 items-center justify-center rounded-md text-xs font-bold ${meta.iconClassName}`}
+                      >
                         {meta.icon}
                       </span>
                       <span className="truncate text-card-foreground">{meta.label}</span>
@@ -391,14 +331,5 @@ export default function StationDetail({ station, onBack }: Props) {
         </div>
       )}
     </motion.div>
-  );
-}
-
-function Section({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <div className="space-y-2">
-      <h3 className="text-[11px] text-foreground/60 font-medium tracking-wide">{label}</h3>
-      {children}
-    </div>
   );
 }

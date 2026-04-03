@@ -9,6 +9,12 @@ import { toast } from 'sonner';
 import { buildStationsQueryParams, fetchStationsFromApi } from '@/infra/api/stationsApi';
 import { useI18n } from '@/lib/i18n';
 
+/** Last known device location from the map layer (for distance in station detail). */
+export interface UserGeoPoint {
+  latitude: number;
+  longitude: number;
+}
+
 interface AppState {
   stations: Station[];
   filteredStations: Station[];
@@ -20,6 +26,9 @@ interface AppState {
   hasSeenOnboarding: boolean;
   hasSelectedLanguage: boolean;
   isLoading: boolean;
+  /** Updated while the map tracks geolocation; used in station detail for distance. */
+  userGeolocation: UserGeoPoint | null;
+  setUserGeolocation: (p: UserGeoPoint | null) => void;
   setSelectedStation: (s: Station | null) => void;
   toggleFavorite: (id: string) => void;
   setFilters: (f: Filters) => void;
@@ -46,6 +55,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(() => loadOnboardingSeen());
   const [hasSelectedLanguage, setHasSelectedLanguage] = useState(() => loadHasSelectedLanguage());
   const [isLoading, setIsLoading] = useState(true);
+  const [userGeolocation, setUserGeolocation] = useState<UserGeoPoint | null>(null);
   useEffect(() => { saveFavorites(favorites); }, [favorites]);
 
   const toggleFavorite = useCallback((id: string) => {
@@ -109,6 +119,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       hasSeenOnboarding,
       hasSelectedLanguage,
       isLoading,
+      userGeolocation,
+      setUserGeolocation,
       setSelectedStation,
       toggleFavorite,
       setFilters,

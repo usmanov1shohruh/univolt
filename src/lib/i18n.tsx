@@ -73,6 +73,9 @@ const translations: Record<Locale, Record<string, string>> = {
     'station.ports_unknown': 'н/д',
     'station.no_results': 'Станции не найдены',
     'station.load_error': 'Не удалось загрузить станции. Проверьте сеть или откройте позже.',
+    'station.detail.distance_km': '{{km}} км',
+    'station.detail.ports_n': '{{n}} коннекторов',
+    'station.detail.operator_cta': 'Сеть',
     'favorites.title': 'Избранное',
     'favorites.empty': 'Пока нет сохранённых станций',
     'favorites.empty.subtitle': 'Нажмите ♡ на карточке станции, чтобы сохранить',
@@ -90,6 +93,7 @@ const translations: Record<Locale, Record<string, string>> = {
     'settings.coming.wallet': 'Кошелёк и оплата',
     'settings.coming.booking': 'Бронирование',
     'settings.coming.routes': 'Планирование маршрута',
+    'common.back': 'Назад',
     'nav.map': 'Карта',
     'nav.favorites': 'Избранное',
     'nav.settings': 'Ещё',
@@ -189,6 +193,9 @@ const translations: Record<Locale, Record<string, string>> = {
     'station.ports_unknown': 'n/a',
     'station.no_results': 'No stations found',
     'station.load_error': 'Could not load stations. Check your connection and try again.',
+    'station.detail.distance_km': '{{km}} km',
+    'station.detail.ports_n': '{{n}} connectors',
+    'station.detail.operator_cta': 'Network',
     'favorites.title': 'Favorites',
     'favorites.empty': 'No saved stations yet',
     'favorites.empty.subtitle': 'Tap ♡ on a station card to save it',
@@ -206,6 +213,7 @@ const translations: Record<Locale, Record<string, string>> = {
     'settings.coming.wallet': 'Wallet & payments',
     'settings.coming.booking': 'Booking',
     'settings.coming.routes': 'Route planning',
+    'common.back': 'Back',
     'nav.map': 'Map',
     'nav.favorites': 'Favorites',
     'nav.settings': 'More',
@@ -305,6 +313,9 @@ const translations: Record<Locale, Record<string, string>> = {
     'station.ports_unknown': 'ko‘rsatilmagan',
     'station.no_results': 'Stansiyalar topilmadi',
     'station.load_error': 'Stansiyalar yuklanmadi. Internetni tekshiring yoki keyinroq urinib ko‘ring.',
+    'station.detail.distance_km': '{{km}} km',
+    'station.detail.ports_n': '{{n}} ulagich',
+    'station.detail.operator_cta': 'Tarmoq',
     'favorites.title': 'Tanlanganlar',
     'favorites.empty': 'Saqlangan stansiyalar yo\'q',
     'favorites.empty.subtitle': 'Stansiya kartasidagi ♡ tugmasini bosing',
@@ -322,6 +333,7 @@ const translations: Record<Locale, Record<string, string>> = {
     'settings.coming.wallet': 'Hamyon va to\'lov',
     'settings.coming.booking': 'Bron qilish',
     'settings.coming.routes': 'Marshrutni rejalashtirish',
+    'common.back': 'Orqaga',
     'nav.map': 'Xarita',
     'nav.favorites': 'Tanlanganlar',
     'nav.settings': 'Boshqa',
@@ -358,7 +370,7 @@ const translations: Record<Locale, Record<string, string>> = {
 interface I18nContextType {
   locale: Locale;
   setLocale: (l: Locale) => void;
-  t: (key: string) => string;
+  t: (key: string, replacements?: Record<string, string | number>) => string;
 }
 
 const I18nContext = createContext<I18nContextType | null>(null);
@@ -380,8 +392,14 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     saveLocale(l as StoredLocale);
   }, []);
 
-  const t = useCallback((key: string): string => {
-    return translations[locale]?.[key] || translations.ru[key] || key;
+  const t = useCallback((key: string, replacements?: Record<string, string | number>): string => {
+    let s = translations[locale]?.[key] || translations.ru[key] || key;
+    if (replacements) {
+      for (const [k, v] of Object.entries(replacements)) {
+        s = s.split(`{{${k}}}`).join(String(v));
+      }
+    }
+    return s;
   }, [locale]);
 
   return (
@@ -396,7 +414,13 @@ export function getLocale(): Locale {
   return saved && translations[saved] ? saved : 'ru';
 }
 
-export function t(key: string): string {
+export function t(key: string, replacements?: Record<string, string | number>): string {
   const locale = getLocale();
-  return translations[locale]?.[key] || translations.ru[key] || key;
+  let s = translations[locale]?.[key] || translations.ru[key] || key;
+  if (replacements) {
+    for (const [k, v] of Object.entries(replacements)) {
+      s = s.split(`{{${k}}}`).join(String(v));
+    }
+  }
+  return s;
 }

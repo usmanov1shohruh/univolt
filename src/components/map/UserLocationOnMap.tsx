@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Circle, Marker, useMap } from 'react-leaflet';
 import L from 'leaflet';
 import { Navigation } from 'lucide-react';
 import { useWatchUserGeolocation } from '@/hooks/useWatchUserGeolocation';
+import { useApp } from '@/context/AppContext';
 import { useI18n } from '@/lib/i18n';
 import { useAppTheme } from '@/theme/ThemeProvider';
 
@@ -32,8 +33,14 @@ function accuracyRadiusM(accuracyM: number): number {
 export function UserLocationOnMap() {
   const map = useMap();
   const { t } = useI18n();
+  const { setUserGeolocation } = useApp();
   const { effectiveTheme } = useAppTheme();
   const position = useWatchUserGeolocation(true);
+
+  useEffect(() => {
+    if (!position) return;
+    setUserGeolocation({ latitude: position.latitude, longitude: position.longitude });
+  }, [position, setUserGeolocation]);
 
   const primaryColor = useMemo(() => {
     void effectiveTheme;
