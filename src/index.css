@@ -275,11 +275,12 @@
 }
 
 /* Marker clusters (leaflet.markercluster) — primary token, matches app theme. */
-.station-map-cluster-root {
+.marker-cluster.station-map-cluster-root {
   background: transparent !important;
   border: none !important;
 }
 
+.marker-cluster.station-map-cluster-root div,
 .station-map-cluster-inner {
   width: 40px;
   height: 40px;

@@ -70,7 +70,8 @@ function createStationClusterIcon(cluster: L.MarkerCluster) {
   const n = cluster.getChildCount();
   return L.divIcon({
     html: `<div class="station-map-cluster-inner"><span>${n}</span></div>`,
-    className: 'station-map-cluster-root',
+    // Keep default marker-cluster class so plugin styles/behavior apply.
+    className: 'marker-cluster marker-cluster-large station-map-cluster-root',
     iconSize: [40, 40],
     iconAnchor: [20, 20],
   });
@@ -225,7 +226,9 @@ export default function StationMap({ stations, onStationSelect, resizeSignal }: 
       <MarkerClusterGroup
         chunkedLoading
         showCoverageOnHover={false}
-        maxClusterRadius={56}
+        // Big enough radius so that on city-level zoom almost все точки
+        // собираются в несколько крупных кластеров.
+        maxClusterRadius={140}
         spiderfyOnMaxZoom
         iconCreateFunction={createStationClusterIcon}
       >
